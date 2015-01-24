@@ -12,7 +12,7 @@ Type class resolution is lazy, namely, evidence of a type class will not be
 constructed until it is needed. Through laziness, ASL can support corecursive
 evidence, i.e., the evidence construction involves infinite steps.
 
-```haskell
+```
 module dlist where
 
 data DList A where
@@ -30,7 +30,6 @@ and = \ x y . case x of
 data Nat where
   z :: Nat
   s :: Nat -> Nat
-
   
 class Eq A where
    eq :: Eq A => A -> A -> Bool
