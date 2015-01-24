@@ -3,7 +3,7 @@ A functionalised implementation of type class
 
 To install: cabal install
 
-To run the interpreter and type checker for a file: asl <filename>
+To run the interpreter and type checker for a file: asl filename
 
 A simple language(called ASL) that support recursive definition and case expression,
 algebraic data type, class declaration(without subtyping and superclass),

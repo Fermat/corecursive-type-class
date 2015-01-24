@@ -55,12 +55,12 @@ extendEq v ts e@(Env {equations}) = e{equations =  (v , ts) : equations}
 
 instance Disp Env where
   disp env = hang (text "Program Definitions") 2 (vcat
-                [disp n <+> text "::" <+> disp ts <+> text "=" <+> disp t | (n, (ts, t)) <- M.toList $ progDef env])  $$ hang (text "Datas") 2 (vcat [ disp n <+> text "::" <+> disp k | (n, (k, _)) <- dataType env])
+                [disp n <+> text "::" <+> disp ts $$ text "=" <+> disp t | (n, (ts, t)) <- M.toList $ progDef env])  $$ hang (text "Datas") 2 (vcat [ disp n <+> text "::" <+> disp k | (n, (k, _)) <- dataType env])
              $$
              hang (text "Type Class Def") 2 (vcat [ disp n <+> disp k | (n, k) <- equations env])
              $$
              hang (text "To be reduce") 2 (vcat
-                                           [ disp "program" <+> disp p  | p <- toEval env])
+                                           [ int i <+> text ":" <+> disp p  | (i, p) <- zip [1..] (toEval env)])
 
 instance Disp [(Exp, Exp)] where
   disp ls = text "[" <+> (vcat $ map (\ (x, y) -> text "(" <+> disp x <+> text ","<+> disp y<+>text ")") ls)

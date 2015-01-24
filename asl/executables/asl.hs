@@ -35,12 +35,12 @@ main = flip catches handlers $ do
                            putStrLn $ "Type Checking success! \n"
                            let env' = convert env
                            print $ disp env'
-                           
-                           putStrLn $ "Beginning Evaluation.  \n"
+--                           putStrLn $ "Beginning Evaluation.  \n"
                            evalRes <- runEval env' $ toEval env'
                            norms <- mapM liftEither evalRes
+                           let norms' = zip [1..] norms
                            putStrLn $ "Result of evaluation.  \n"
-                           mapM_ (print . disp) norms
+                           mapM_ (\ (i, t) -> print (int i <+>  text ":"<+> disp t)) norms'
 
                            -- let (Module v a') = a
                            -- ensureTypeCheck a'

@@ -56,8 +56,9 @@ instance Eq (F (Fix (Comp G F) G)) => Eq (Fix F G) where
                   fix s -> case y of
  		      	    fix t -> eq s t
 
+test = eq (fix (cons unit (fix (comp (pair nil nil))))) (fix nil)
 reduce eq (fix (cons unit (fix (comp (pair nil nil))))) (fix (cons unit (fix (comp (pair nil nil)))))
 --  (fix nil)
---reduce test
+reduce test
 -- (fix nil)
 
