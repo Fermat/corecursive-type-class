@@ -25,7 +25,7 @@ data Bool where
 
 and = \ x y . case x of
                 true -> y
-		false -> false
+                false -> false
 
 data Nat where
   z :: Nat
