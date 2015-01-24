@@ -12,7 +12,8 @@ Type class resolution is lazy, namely, evidence of a type class will not be
 constructed until it is needed. Through laziness, ASL can support corecursive
 evidence, i.e., the evidence construction involves infinite steps.
 
-```module dlist where
+```haskell
+module dlist where
 
 data DList A where
  ni :: DList A
@@ -55,4 +56,5 @@ instance Eq A, Eq (DList (DList A)) => Eq (DList A) where
 
 test = eq (con z (con (con z (con (con z ni) ni)) ni))  (con z (con (con z ni) ni))
 
-reduce test ```
+reduce test 
+```
