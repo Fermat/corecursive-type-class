@@ -1,0 +1,3 @@
+1. Incorporating the non-termination check.
+2. Issue an error for the cases that are not covered
+
