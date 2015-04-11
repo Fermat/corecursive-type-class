@@ -17,7 +17,7 @@ import Data.List hiding(partition)
 --import Debug.Trace
 
 -- StateT Subst for HM unification, [(VName, TScheme)] for typing local context
--- ReaderT is for the local state of type class assumption
+
 type TCMonad a = StateT Int (StateT Subst (ReaderT  [(VName, TScheme)] Global)) a  
 
 
@@ -47,26 +47,28 @@ checkDecl (EvalDecl p) = do
       term = foldl' (\ x y -> App x y) newP preds
   lift $ lift $ modify (\ e -> extendEval term e)
   return ()
-  
-checkDecl (ProgDecl x p) = do
-  n <- makeName "X" 
+
+checkDecl (ProgDecl pos x p) = do
+  n <- makeName "X"
   let ts = Scheme [] $ DArrow [] (EVar n)
   (p', f, assump) <- local (\ y -> (x, ts):y) $ checkProg p
-  subs' <- lift $ get
-  -- emit subs'
+  -- subs <- lift $ get
+  -- emit subs
   -- emit "\n"
   -- emit assump
   -- emit "\n"
   -- emit f
-  let f' = applyE subs' f
-      f1 = case lookup n subs' of
-                Just s -> s
-                Nothing -> EVar n
-  unification f1 f'
-  subs <- lift $ get
+  -- let f' = applyE subs' f
+  --     f1 = case lookup n subs' of
+  --               Just s -> s
+  --               Nothing -> EVar n
+  unification f (EVar n) `catchError` addErrorPos pos x
+  subs' <- lift $ get
+  -- emit subs'
+  -- subs <- lift $ get
   let
-      f'' = applyE subs f
-      assump' = map (\(a , b) -> (a, applyE subs b)) assump
+      f'' = applyE subs' f
+      assump' = map (\(a , b) -> (a, applyE subs' b)) assump
       names = map fst assump'
       preds = map snd assump'
       newP = foldr (\ x y -> Lambda x y) p' names 
@@ -144,7 +146,6 @@ checkProg (Let xs p) = do
             (t', ft, as') <- local (\y -> env ++ y) $ checkProg t 
             unification f ft
             return (t', ft, as') 
-
 
 checkProg (Match p branches) = do
   (p', datatype, assump') <- checkProg p 

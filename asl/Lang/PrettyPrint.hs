@@ -140,7 +140,7 @@ instance Disp Module where
   disp (Module name decl) = text "module" <+> text name <+> text "where" $$ vcat (map disp decl)
 
 instance Disp Decl where
-  disp (ProgDecl x p) = disp x <+> text "=" <+>disp p
+  disp (ProgDecl _ x p) = disp x <+> text "=" <+>disp p
   disp (DataDecl p d) = disp d
   disp (ClassDecl p d) = disp d
   disp (InstDecl p d) = disp d

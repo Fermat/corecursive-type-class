@@ -8,7 +8,7 @@ import Data.Typeable
 import Control.Monad.State
 import Control.Monad.Except
 import Control.Exception
-import Control.Monad.Trans.Except
+--import Control.Monad.Trans.Except
 import qualified Data.Map as M
 import Control.Applicative hiding (empty)
 import Control.Monad.Reader
@@ -55,7 +55,7 @@ extendEq v ts e@(Env {equations}) = e{equations =  (v , ts) : equations}
 
 instance Disp Env where
   disp env = hang (text "Program Definitions") 2 (vcat
-                [disp n <+> text "::" <+> disp ts $$ text "=" <+> disp t | (n, (ts, t)) <- M.toList $ progDef env])  $$ hang (text "Datas") 2 (vcat [ disp n <+> text "::" <+> disp k | (n, (k, _)) <- dataType env])
+                [disp n <+> text "::" <+> disp ts $$ text "=" <+> disp t <+> text "\n" | (n, (ts, t)) <- M.toList $ progDef env])  $$ hang (text "Datas") 2 (vcat [ disp n <+> text "::" <+> disp k | (n, (k, _)) <- dataType env])
              $$
              hang (text "Type Class Def") 2 (vcat [ disp n <+> disp k | (n, k) <- equations env])
              $$

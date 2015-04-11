@@ -151,9 +151,10 @@ qtype = do
 progDecl :: Parser Decl
 progDecl = do
   n <- termVar
+  pos <- getPosition
   reservedOp "="
   p <- prog
-  return $ ProgDecl n p
+  return $ ProgDecl pos n p
   
 progA :: Parser Exp  
 progA = wrapPos $ absProg <|> caseTerm <|> appProg <|> letbind <|> parens prog

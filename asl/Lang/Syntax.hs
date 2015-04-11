@@ -39,7 +39,7 @@ data Inst = Inst ([Exp], Exp) [(VName, Exp)] deriving Show
 
 data Class = Class VName [VName] [(VName,QType)] deriving Show    
 
-data Decl = ProgDecl VName Exp
+data Decl = ProgDecl SourcePos VName Exp
           | DataDecl SourcePos Datatype 
           | InstDecl SourcePos Inst
           | ClassDecl SourcePos Class
