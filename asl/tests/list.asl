@@ -50,4 +50,4 @@ instance Eq A => Eq (List A) where
 test1 =  eq (cons z nil) (cons z nil) 
 -- (cons z (cons z nil)) (cons z (cons z nil))
 
-reduce test1
+-- reduce test1

@@ -52,14 +52,25 @@ checkDecl (ProgDecl x p) = do
   n <- makeName "X" 
   let ts = Scheme [] $ DArrow [] (EVar n)
   (p', f, assump) <- local (\ y -> (x, ts):y) $ checkProg p
+  subs' <- lift $ get
+  -- emit subs'
+  -- emit "\n"
+  -- emit assump
+  -- emit "\n"
+  -- emit f
+  let f' = applyE subs' f
+      f1 = case lookup n subs' of
+                Just s -> s
+                Nothing -> EVar n
+  unification f1 f'
   subs <- lift $ get
---  emit subs
-  let f' = applyE subs f
+  let
+      f'' = applyE subs f
       assump' = map (\(a , b) -> (a, applyE subs b)) assump
       names = map fst assump'
       preds = map snd assump'
       newP = foldr (\ x y -> Lambda x y) p' names 
-  sc <- qToTScheme (DArrow preds f')
+  sc <- qToTScheme (DArrow preds f'')
   lift $ lift $ modify (\ e -> extendProgDef x sc newP e)
 
 checkDecl (DataDecl pos d@(Data n _ _)) = 
