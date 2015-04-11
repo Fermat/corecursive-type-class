@@ -14,7 +14,7 @@ and = \ x y . case x of
 
 map = \ f l . case l of
                   nil -> nil
-                  cons x xs -> cons (f x) xs
+                  cons x xs -> cons (f x) (map f xs)
 
 zipWith = \ f l1 l2 . case l1 of
                          nil -> case l2 of
