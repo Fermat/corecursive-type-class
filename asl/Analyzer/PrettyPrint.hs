@@ -1,6 +1,6 @@
 {-# LANGUAGE FlexibleInstances, FlexibleContexts #-}
-module PrettyPrint where
-import Syntax
+module Analyzer.PrettyPrint where
+import Analyzer.Syntax
 import Text.PrettyPrint
 
 class Disp d where

@@ -1,8 +1,8 @@
-module Stable where
+module Analyzer.Stable where
 import Data.List
-import Syntax
+import Analyzer.Syntax
 --import LPTM
-import PrettyPrint
+import Analyzer.PrettyPrint
 import Text.PrettyPrint
 import Test.QuickCheck
 import Control.Monad.State

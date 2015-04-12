@@ -1,4 +1,4 @@
-module Syntax where
+module Analyzer.Syntax where
 import Control.Monad
 import Control.Monad.State
 import qualified Data.Set as S

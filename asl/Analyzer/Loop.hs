@@ -1,7 +1,7 @@
-module Loop where
+module Analyzer.Loop where
 import Data.List
-import Syntax
-import LPTM
+import Analyzer.Syntax
+import Analyzer.LPTM
 import qualified Data.Set as S
 
 closed :: Subst -> [Form] -> [Term] -> Bool

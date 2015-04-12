@@ -1,9 +1,9 @@
-module Narrowing where
+module Analyzer.Narrowing where
 import Data.List
-import PrettyPrint
+import Analyzer.PrettyPrint
 import Text.PrettyPrint
-import Syntax
-import LPTM
+import Analyzer.Syntax
+import Analyzer.LPTM
 import Control.Monad.State
 import qualified Data.Set as S
 

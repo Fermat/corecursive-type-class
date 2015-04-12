@@ -1,8 +1,8 @@
-module LPTM where
+module Analyzer.LPTM where
 import Prelude hiding(head)
-import Syntax
-import Stable
-import PrettyPrint
+import Analyzer.Syntax
+import Analyzer.Stable
+import Analyzer.PrettyPrint
 import Text.PrettyPrint
 import qualified Data.Set as S
 import Control.Monad.State
