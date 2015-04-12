@@ -116,3 +116,6 @@ varBind u t | t == u = return []
 
 testUnify :: [Subst]
 testUnify = unify t2 t1
+
+dpGen :: [Form] -> [Rule]
+dpGen fs = [(Rule [] h b) | (Form h bs) <- fs, b <- bs]
