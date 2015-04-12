@@ -39,6 +39,7 @@ narrowStep s1 trs (f1:env) p  = do
       return $ this : res
 
 --narrowing :: [([Term], Rule)] -> Subst -> [Term] -> Term -> Term -> m [(Subst, [Term], Term, Term)]
+-- narrowing incorporated the loop detection.      
 narrowing env sub rels l r =
   case match l r of
     Nothing -> do
