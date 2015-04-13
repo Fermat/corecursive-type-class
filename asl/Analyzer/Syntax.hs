@@ -69,11 +69,28 @@ match (App t1 t2) (App t1' t2') = do
 
 match _ _ = mzero
 
-t1 = App (Pred "eq") (App (Var "x") (Var "x"))
-t2 = App (Pred "eq") (App (Fun "f") (Var "x"))
+t1 = App (Pred "eq") (App (Var "y") (Var "x"))
+t2 = App (Pred "eq") (App (Var "y") (Var "y"))
 
 testMatch :: [Subst]
 testMatch = match t1 t1
+
+
+listMerge l = 
+  let sub = map (\ x -> [x]) $ l in
+  foldM merge [] sub
+  
+alphaEq f1 f2 =
+  case match f1 f2 of
+    [] -> False
+    s:[] -> let s' = [(a, b) | (b, a) <- s] in
+      if all prop s' then
+        case listMerge s' of
+             Nothing -> False
+             Just sub -> f1 == apply sub f2
+      else False
+      where prop (Var _, b1) = True                 
+            prop (_, b1) = False
 
 
 fv :: Term -> S.Set Term

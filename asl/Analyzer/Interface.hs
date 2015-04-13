@@ -20,8 +20,6 @@ condLoop sub env qs = case closed sub env qs of
                         Nothing -> False
                         Just ns -> fst $ runLPUnif env ns 
 
-  
-
 testCl = closed [(Var "y", (App (App (Fun "cmp") (Var "x")) (Var "y")))] [axiom] [a1]
 
 filtering :: [Rule] -> [Rule]
@@ -41,15 +39,17 @@ loopCheck env rules (a@(Rule cds l r):ls) =
 
 labelForm :: [Form] -> [(Rule, Bool)] -> [(Form, Bool)]
 labelForm (a@(Form h bs) : fs) ls =
-  if helper h fs then (a, True) : labelForm fs ls
+  if helper h ls then (a, True) : labelForm fs ls
   else (a, False) : labelForm fs ls
   where helper head [] = False
-        helper head ((Rule _ l r, b):ps) = 
--- stable :: [Form] -> [Form, ]
--- stable rls = let dpPair = dpGen rls
---                  rules = ruleExtension dpPair
---                  axioms = axiomExtension rules
---                  rules' = filtering rules
---                  result = [ res | a@Rule cds l r <- rules',
---                             let res = runNarrowing rules' cds l r]
+        helper head ((Rule _ l r, b):ps) | alphaEq head l && b = True
+                                         | otherwise = helper head ps
+        
+stable :: [Form] -> [(Form, Bool)]
+stable rls = let dpPair = dpGen rls
+                 rules = ruleExtension dpPair
+                 axioms = axiomExtension rules
+                 rules' = filtering rules
+                 result = labelForm rls $ loopCheck axioms rules' rules'
+             in result
                  
