@@ -7,6 +7,7 @@ import Analyzer.Syntax
 import Analyzer.LPTM
 import Control.Monad.State
 import qualified Data.Set as S
+import Debug.Trace
 
 quantify' :: [Rule] -> [([Term], Rule)]
 quantify' [] = []
@@ -27,20 +28,20 @@ freshRule (xs, t@(Rule cds h b)) =
      return $ Rule cds' h' b'
 
 -- narrowStep ::
---  Subst -> [Term] -> [([Term], Rule)] -> Term -> State Int [(Subst, [Term], Term)]
+--  Subst -> [Term] -> [([Term], Rule)] -> Term -> State Int [(Subst, [Term], Term, n)]
 -- instantiate rule's vars
 -- return a set of reachable terms
-narrowStep s1 trs [] p = return []
-narrowStep s1 trs (f1:env) p  = do
+narrowStep s1 trs [] p n | n < 21 = return []
+narrowStep s1 trs (f1:env) p n | n < 21 = do
   f1' <- freshRule f1
   case unify (left f1') p of
-    Nothing -> narrowStep s1 trs env p 
+    Nothing -> narrowStep s1 trs env p n
     Just s -> do
       let this =
-            (compose s s1, map (apply s) (cond f1') ++ map (apply s) trs, apply s (right f1'))
-      res <- narrowStep s1 trs env p     
+            (compose s s1, map (apply s) (cond f1') ++ map (apply s) trs, apply s (right f1'), n+1)
+      res <- narrowStep s1 trs env p n    
       return $ this : res
-
+                               | otherwise = return []
 --narrowing :: [([Term], Rule)] -> Subst -> [Term] -> Term -> Term -> m [(Subst, [Term], Term, Term)]
 -- narrowing incorporated the loop detection.
 -- ironically, narrowing itself will diverge in the
@@ -50,21 +51,24 @@ narrowStep s1 trs (f1:env) p  = do
 -- Note that an engineering problem means we try to maximize the chances of success
 -- , while still allowing unknown failure.
       
--- The number of steps should be the number of rules times a factor, say 3 
-narrowing env sub rels l r 0 = return []
-narrowing env sub rels l r n | n > 0 =
+-- The number of steps should be the number of rules times a factor, say 3
+narrowing env sub rels l r n | trace (show (disp n <+>disp l <+> text "->" <+> disp r)) False = undefined      
+
+narrowing env sub rels l r n =
   case match l r of
     Nothing -> do
-      res <- narrowStep sub rels env r 
-      helper env l res (n-1)
+      res <- narrowStep sub rels env r n
+      helper env l res n
     Just m -> return [(m, sub, rels, l, r)]      
 
+--helper env l [] n = return []
+--helper env l _ n | n < 0 = return []
 helper env l [] n = return []
-helper env l ((s, rs, t):ls) n = do
-  a <- narrowing env s rs (apply s l) t n 
+helper env l ((s, rs, t, m):ls) n = do
+  a <- narrowing env s rs (apply s l) t n
   b <- helper env l ls n
   return $ a++b
-
+    
       
 
 
@@ -94,7 +98,7 @@ p'' = Rule [] (App (Pred "Eq") (Var "x"))
 runNarrowing :: [Rule] -> [Term] -> Term -> Term -> [(Subst, Subst, [Term], Term, Term)]
 runNarrowing rules rels l r =
   let rules' = quantify' rules
-      number = (length rules) * 3 -- here is the engineering part
+      number = 0 :: Int
   in
    evalState (narrowing rules' [] rels l r number) 1
 
