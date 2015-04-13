@@ -9,8 +9,9 @@ filtering :: [Rule] -> [Rule]
 filtering rs = [ a | a@(Rule _ l r) <- rs, not (hasApp r)]
 stable :: [Form] -> [Form, ]
 stable rls = let dpPair = dpGen rls
-                 rules = rueExtension dpPair
+                 rules = ruleExtension dpPair
                  axioms = axiomExtension rules
                  rules' = filtering rules
-                 res = runNarrowing rules' 
+                 result = [ res | a@Rule cds l r <- rules',
+                            let res = runNarrowing rules' cds l r]
                  
