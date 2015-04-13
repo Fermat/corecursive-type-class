@@ -3,6 +3,7 @@ import Analyzer.Syntax
 import Analyzer.Stable
 import Analyzer.Narrowing
 import Analyzer.PrettyPrint
+import Text.PrettyPrint
 import Analyzer.LPTM
 import qualified Data.Set as S
 import Data.List
@@ -45,11 +46,24 @@ labelForm (a@(Form h bs) : fs) ls =
         helper head ((Rule _ l r, b):ps) | alphaEq head l && b = True
                                          | otherwise = helper head ps
         
-stable :: [Form] -> [(Form, Bool)]
+-- stable :: [Form] -> [(Form, Bool)]
 stable rls = let dpPair = dpGen rls
                  rules = ruleExtension dpPair
                  axioms = axiomExtension rules
                  rules' = filtering rules
-                 result = labelForm rls $ loopCheck axioms rules' rules'
-             in result
+                 lc = loopCheck axioms rules' rules'
+--                 result = labelForm rls $ 
+             in lc
                  
+
+r1' = Form (App (Pred "Eq") (App (App (Fun "Fix") (Var "F")) (Var "G"))) [t7]
+r2' = Form (App (Pred "Eq") (App (App (App (Fun "Cmp") (Var "F")) (Var "G")) (Var "A")))
+     [(App (Pred "Eq") (App (Var "F") (App (Var "G") (Var "A"))))]
+     
+r3' = Form (App (Pred "Eq") (App (App (Fun "Gs") (Var "A")) (Var "R"))) [(App (Pred "Eq") (Var "A"))]     
+
+r4' = Form (App (Pred "Eq") (App (App (Fun "Gs") (Var "A")) (Var "R"))) [(App (Pred "Eq") (Var "R"))]     
+
+r5' = Form (App (Pred "Eq") (App (Fun "Pair") (Var "A"))) [(App (Pred "Eq") (Var "A"))]
+testS = stable [r1', r2', r3', r4', r5'] 
+  
