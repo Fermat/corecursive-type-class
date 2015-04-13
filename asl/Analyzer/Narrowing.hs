@@ -57,7 +57,7 @@ narrowing env sub rels l r n | n > 0 =
     Nothing -> do
       res <- narrowStep sub rels env r 
       helper env l res (n-1)
-    Just _ -> return [(sub, rels, l, r)]      
+    Just m -> return [(m, sub, rels, l, r)]      
 
 helper env l [] n = return []
 helper env l ((s, rs, t):ls) n = do
@@ -90,8 +90,8 @@ p' = Rule [] (App (Pred "Eq") (App (Fun "S") (Var "x"))) -- (App (Pred "Eq") (Va
 p'' = Rule [] (App (Pred "Eq") (Var "x"))
       (App (Pred "Eq") (App (Fun "S") (Var "x")))
 
-
-
+-- the first Subst is matcher, second Subst is the accumulated unifier
+runNarrowing :: [Rule] -> [Term] -> Term -> Term -> [(Subst, Subst, [Term], Term, Term)]
 runNarrowing rules rels l r =
   let rules' = quantify' rules
       number = (length rules) * 3 -- here is the engineering part
@@ -99,11 +99,11 @@ runNarrowing rules rels l r =
    evalState (narrowing rules' [] rels l r number) 1
 
 test = runNarrowing [p1, p2] [] p11 p12
-test' = let (s, _, l, r):[] = runNarrowing [p1, p2] [] q11 q12 in
+test' = let (_, s, _, l, r):[] = runNarrowing [p1, p2] [] q11 q12 in
   disp s $$ disp l <+> text "->" <+> disp r
 
-test'' = let (s, _, l, r):[] = runNarrowing [p1', p2'] [] (left p1') (right p1') in
-  disp s $$ disp l <+> text "->" <+> disp r
+test'' = let (m, s, _, l, r):[] = runNarrowing [p1', p2'] [] (left p1') (right p1') in
+  disp m $$ disp l <+> text "->" <+> disp r
 
 test3 = runNarrowing [p'', p'] [] (left p') (right p')
 test4 = runNarrowing [r1] [] (left r1) (right r2) 

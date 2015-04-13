@@ -62,18 +62,20 @@ unifStep (f1:env) p = do
       return $ Just (map (apply s) (body f1'), s)
 
 
--- lpUnif can be diverging. 
+-- lpUnif can be diverging. So for engineering purpose, we have to
+-- impose a limit n      
 -- Here I assume a lemma: if s is not unifiable with t, then
 -- for any substitution sub, sub s is not unifiable with t.      
 
-lpUnif :: [([Term],Form)] -> [Term] -> Unif Bool
-lpUnif env [] = return True -- success
-lpUnif env (p:ps) = do
+lpUnif :: [([Term],Form)] -> [Term] -> Int -> Unif Bool
+lpUnif env _ 0 = return False -- false now does not mean anything.
+lpUnif env [] n = return True -- success
+lpUnif env (p:ps) n = do
   r <- unifStep env p
   case r of
     Nothing -> return False -- if one query is irreducible by lpUnif, then it is a failure
     Just (ns, s) ->
-      lpUnif env ((map (apply s) ps)++ns)
+      lpUnif env ((map (apply s) ps)++ns) (n-1)
                        
 
 runLPUnif :: [Form] -> [Term] -> (Bool, Subst)
@@ -81,7 +83,7 @@ runLPUnif fs qs =
   let
     fs1 = reorder fs [] []
     fs' = quantify fs1 in
-  runIdentity $ runStateT (evalStateT (lpUnif fs' qs) 1) []
+  runIdentity $ runStateT (evalStateT (lpUnif fs' qs 21) 1) [] -- adjust the number here if you want
 
 axioms = let
          as = axiomExtension $ ruleExtension [r1, r2, r3, r4, r5]

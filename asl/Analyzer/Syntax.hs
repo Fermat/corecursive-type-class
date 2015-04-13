@@ -52,8 +52,8 @@ merge s1 s2 = if agree then return $ s1 ++ s2 else mzero
 
 match :: MonadPlus m => Term -> Term -> m Subst
 
-match (Var s) t1 | (Var s) == t1 = return []
-                 | otherwise = return [(Var s, t1)]
+match (Var s) t1 -- | (Var s) == t1 = return []
+  = return [(Var s, t1)]
 match Star Star = return []
 
 match (Pred p1) (Pred p2) =
@@ -69,7 +69,7 @@ match (App t1 t2) (App t1' t2') = do
 
 match _ _ = mzero
 
-t1 = App (Pred "eq") (App (Var "x") (Var "y"))
+t1 = App (Pred "eq") (App (Var "x") (Var "x"))
 t2 = App (Pred "eq") (App (Fun "f") (Var "x"))
 
 testMatch :: [Subst]
