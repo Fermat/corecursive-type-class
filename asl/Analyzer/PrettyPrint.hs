@@ -14,6 +14,9 @@ instance Disp Doc where
 instance Disp Int where
   disp = integer . toInteger
 
+instance Disp Bool where
+  disp = text . show
+
 dParen:: (Disp a) => Int -> a -> Doc
 dParen level x =
    if level >= (precedence x)

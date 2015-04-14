@@ -34,7 +34,6 @@ t3 = App (App (App (App (Var "NAK") (App Star Star)) (App (Var "A") (Var "2"))) 
 hasApp t = let args = map flatten $ tail $ flatten t
            in foldr (\ x y -> isApp x || y) False args
 
-
 t5 = App (Pred "Eq") (App (App (App (Var "x") (App (Var "y") (App (Var "c") (Fun "f")))) (Var "z")) (Var "q"))
 t6 = App (App (Pred "Eq")  (Var "x")) (App (Var "q") (Var "p"))
 -- (App (App (Var "x") (Var "y")) (Var "z"))

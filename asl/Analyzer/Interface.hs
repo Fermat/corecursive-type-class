@@ -27,17 +27,20 @@ testCl = closed [(Var "y", (App (App (Fun "cmp") (Var "x")) (Var "y")))] [axiom]
 filtering :: [Rule] -> [Rule]
 filtering rs = [ a | a@(Rule _ l r) <- rs, not (hasApp r)]
 
-loopCheck :: [Form] -> [Rule] -> [Rule] -> [(Rule, Bool)]
-loopCheck env rules [] = []
-loopCheck env rules (a@(Rule cds l r):ls) =
-  let res = runNarrowing rules cds l r
-      in helper res
-  where helper ress = 
-          case ress of
-            [] -> (a, False) : loopCheck env rules ls
-            (m, _, rels, l, r):xs ->
-              if condLoop m env cds then (a, True):loopCheck env rules ls
-              else helper xs 
+loopCheck :: [Form] -> [Rule] -> [(Rule, Bool)]
+loopCheck env [] = []
+loopCheck env (a@(Rule cds l r):ls) =
+  case simpLoop a of
+    Nothing -> (a, False) : loopCheck env ls
+    Just m -> if condLoop m env cds then (a, True):loopCheck env ls
+              else (a, False) : loopCheck env ls
+  --     in helper res
+  -- where helper ress = 
+  --         case ress of
+  --           [] -> (a, False) : loopCheck env rules ls
+  --           (m, _, rels, l, r):xs ->
+  --             if condLoop m env cds then (a, True):loopCheck env rules ls
+  --             else helper xs 
 
 labelForm :: [Form] -> [(Rule, Bool)] -> [(Form, Bool)]
 labelForm [] ls = []
@@ -48,14 +51,14 @@ labelForm (a@(Form h bs) : fs) ls =
         helper head ((Rule _ l r, b):ps) | alphaEq head l && b = True
                                          | otherwise = helper head ps
         
--- stable :: [Form] -> [(Form, Bool)]
+stable :: [Form] -> [(Form, Bool)]
 stable rls = let dpPair = dpGen rls
                  rules = ruleExtension dpPair
                  axioms = axiomExtension rules
                  rules' = filtering rules
-                 lc = loopCheck axioms rules' rules'
+                 lc = loopCheck axioms rules'
                  result = labelForm rls lc
-             in axioms
+             in result
                  
 p111 = Form (App (Pred "Eq") (App (Fun "S") (Var "x"))) [(App (Pred "Eq") (Var "x"))]
 p112 = Form (App (Pred "Eq") (Var "x")) [(App (Pred "Eq") (App (Fun "S") (Var "x")))]
@@ -66,10 +69,11 @@ r2' = Form (App (Pred "Eq") (App (App (App (Fun "Cmp") (Var "F")) (Var "G")) (Va
      
 r3' = Form (App (Pred "Eq") (App (App (Fun "Gs") (Var "A")) (Var "R"))) [(App (Pred "Eq") (Var "A"))]     
 
-r4' = Form (App (Pred "Eq") (App (App (Fun "Gs") (Var "A")) (Var "R"))) [(App (Pred "Eq") (Var "R"))]     
+r4' = Form (App (Pred "Eq") (App (App (Fun "Gs") (Var "A")) (Var "R"))) [(App (Pred "Eq") (Var "R")), (App (Pred "Eq") (Var "A"))]     
 
 r5' = Form (App (Pred "Eq") (App (Fun "Pair") (Var "A"))) [(App (Pred "Eq") (Var "A"))]
-testS = stable [r1', r2', r3', r4', r5']  -- [p111, p112]
+
+testS = map (\ (a, b) -> text "(" <> disp a <+> text "," <+> disp b <> text ")") $ stable [r1', r2', r4', r5']  -- [p111, p112]
 
 
 as = [Form {head = App (App (Pred "Xi") (Fun "Gs")) (App (Pred "Eq") (App (App Star (Var "A")) (Var "R"))), body = []},Form {head = App (App (Pred "Xi") (App (Fun "Gs") (Var "A"))) (App (Pred "Eq") (App Star (Var "R"))), body = []},Form {head = App (App (Pred "Xi") (Fun "Pair")) (App (Pred "Eq") (App Star (Var "A"))), body = []},Form {head = App (App (Pred "Xi") (App (App (Fun "Cmp") (Var "F")) (Var "G"))) (App (Pred "Eq") (App Star (Var "A"))), body = [App (App (Pred "Xi") (Var "F")) (App (Pred "Eq") (App Star (Var "y1"))),App (App (Pred "Xi") (Var "G")) (App (Pred "Eq") (App Star (Var "y2")))]}]
@@ -81,7 +85,7 @@ test111 = let
               r = App (Pred "Eq") (Var "A")
 --              (m, _, cds', l', r'):xs = runNarrowing rls [] l r
               
-          in loopCheck as rls rls --runNarrowing rls [] l r -- loopCheck as rls [rls !! 3]
+          in l -- loopCheck as rls rls --runNarrowing rls [] l r -- loopCheck as rls [rls !! 3]
 --          disp m <+> text "\n" <+>disp l' <+> text "->" <+> disp r' <+> text "\n" <+> vcat (map disp cds')
 
 -- loopCheck :: [Form] -> [Rule] -> [Rule] -> [(Rule, Bool)]

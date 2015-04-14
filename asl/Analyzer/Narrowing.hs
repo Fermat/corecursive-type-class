@@ -31,17 +31,17 @@ freshRule (xs, t@(Rule cds h b)) =
 --  Subst -> [Term] -> [([Term], Rule)] -> Term -> State Int [(Subst, [Term], Term, n)]
 -- instantiate rule's vars
 -- return a set of reachable terms
-narrowStep s1 trs [] p n | n < 21 = return []
-narrowStep s1 trs (f1:env) p n | n < 21 = do
+
+narrowStep s1 trs (f1:env) p = do
   f1' <- freshRule f1
   case unify (left f1') p of
-    Nothing -> narrowStep s1 trs env p n
+    Nothing -> narrowStep s1 trs env p 
     Just s -> do
       let this =
-            (compose s s1, map (apply s) (cond f1') ++ map (apply s) trs, apply s (right f1'), n+1)
-      res <- narrowStep s1 trs env p n    
+            (compose s s1, map (apply s) (cond f1') ++ map (apply s) trs, apply s (right f1'))
+      res <- narrowStep s1 trs env p 
       return $ this : res
-                               | otherwise = return []
+
 --narrowing :: [([Term], Rule)] -> Subst -> [Term] -> Term -> Term -> m [(Subst, [Term], Term, Term)]
 -- narrowing incorporated the loop detection.
 -- ironically, narrowing itself will diverge in the
@@ -52,21 +52,21 @@ narrowStep s1 trs (f1:env) p n | n < 21 = do
 -- , while still allowing unknown failure.
       
 -- The number of steps should be the number of rules times a factor, say 3
-narrowing env sub rels l r n | trace (show (disp n <+>disp l <+> text "->" <+> disp r)) False = undefined      
+--narrowing env sub rels l r n | trace (show (disp n <+>disp l <+> text "->" <+> disp r)) False = undefined      
 
-narrowing env sub rels l r n =
+narrowing env sub rels l r =
   case match l r of
     Nothing -> do
-      res <- narrowStep sub rels env r n
-      helper env l res n
+      res <- narrowStep sub rels env r 
+      helper env l res 
     Just m -> return [(m, sub, rels, l, r)]      
 
 --helper env l [] n = return []
 --helper env l _ n | n < 0 = return []
-helper env l [] n = return []
-helper env l ((s, rs, t, m):ls) n = do
-  a <- narrowing env s rs (apply s l) t n
-  b <- helper env l ls n
+helper env l [] = return []
+helper env l ((s, rs, t):ls) = do
+  a <- narrowing env s rs (apply s l) t 
+  b <- helper env l ls 
   return $ a++b
     
       
@@ -98,9 +98,9 @@ p'' = Rule [] (App (Pred "Eq") (Var "x"))
 runNarrowing :: [Rule] -> [Term] -> Term -> Term -> [(Subst, Subst, [Term], Term, Term)]
 runNarrowing rules rels l r =
   let rules' = quantify' rules
-      number = 0 :: Int
+--      number = 0 :: Int
   in
-   evalState (narrowing rules' [] rels l r number) 1
+   evalState (narrowing rules' [] rels l r) 1
 
 test = runNarrowing [p1, p2] [] p11 p12
 test' = let (_, s, _, l, r):[] = runNarrowing [p1, p2] [] q11 q12 in
@@ -113,3 +113,7 @@ test3 = runNarrowing [p'', p'] [] (left p') (right p')
 test4 = runNarrowing [r1] [] (left r1) (right r2) 
         -- let (s, _, l, r):[] = runNarrowing [p'', p'] [] (left p') (right p') in
   -- disp s $$ disp l <+> text "->" <+> disp r
+
+-- detect whether a rule form a loop
+simpLoop (Rule rels l r) =  match l r 
+
