@@ -34,13 +34,6 @@ loopCheck env (a@(Rule cds l r):ls) =
     Nothing -> (a, False) : loopCheck env ls
     Just m -> if condLoop m env cds then (a, True):loopCheck env ls
               else (a, False) : loopCheck env ls
-  --     in helper res
-  -- where helper ress = 
-  --         case ress of
-  --           [] -> (a, False) : loopCheck env rules ls
-  --           (m, _, rels, l, r):xs ->
-  --             if condLoop m env cds then (a, True):loopCheck env rules ls
-  --             else helper xs 
 
 labelForm :: [Form] -> [(Rule, Bool)] -> [(Form, Bool)]
 labelForm [] ls = []
@@ -73,19 +66,7 @@ r4' = Form (App (Pred "Eq") (App (App (Fun "Gs") (Var "A")) (Var "R"))) [(App (P
 
 r5' = Form (App (Pred "Eq") (App (Fun "Pair") (Var "A"))) [(App (Pred "Eq") (Var "A"))]
 
-testS = map (\ (a, b) -> text "(" <> disp a <+> text "," <+> disp b <> text ")") $ stable [r1', r2', r4', r5']  -- [p111, p112]
+forms = text "Horn Formulas:\n" $$ (vcat $ map disp [r1', r2', r4', r5'])
+testS = text "result for simple loop detection:\n" $$ vcat (map (\ (a, b) -> text "(" <> disp a <+> text "," <+> disp b <> text ")") $ stable [r1', r2', r4', r5'])  
 
 
-as = [Form {head = App (App (Pred "Xi") (Fun "Gs")) (App (Pred "Eq") (App (App Star (Var "A")) (Var "R"))), body = []},Form {head = App (App (Pred "Xi") (App (Fun "Gs") (Var "A"))) (App (Pred "Eq") (App Star (Var "R"))), body = []},Form {head = App (App (Pred "Xi") (Fun "Pair")) (App (Pred "Eq") (App Star (Var "A"))), body = []},Form {head = App (App (Pred "Xi") (App (App (Fun "Cmp") (Var "F")) (Var "G"))) (App (Pred "Eq") (App Star (Var "A"))), body = [App (App (Pred "Xi") (Var "F")) (App (Pred "Eq") (App Star (Var "y1"))),App (App (Pred "Xi") (Var "G")) (App (Pred "Eq") (App Star (Var "y2")))]}]
-
-rls = [Rule {cond = [], left = App (Pred "Eq") (App (App (Fun "Gs") (Var "A")) (Var "R")), right = App (Pred "Eq") (Var "A")},Rule {cond = [], left = App (Pred "Eq") (App (App (Fun "Gs") (Var "A")) (Var "R")), right = App (Pred "Eq") (Var "R")},Rule {cond = [], left = App (Pred "Eq") (App (Fun "Pair") (Var "A")), right = App (Pred "Eq") (Var "A")},Rule {cond = [App (App (Pred "Xi") (Var "F")) (App (Pred "Eq") (App Star (Var "y1")))], left = App (Pred "Eq") (App (App (Fun "Fix") (Var "F")) (Var "G")), right = App (Pred "Eq") (App (App (Fun "Fix") (App (App (Fun "Cmp") (Var "G")) (Var "F"))) (Var "G"))},Rule {cond = [App (App (Pred "Xi") (Var "F")) (App (Pred "Eq") (App Star (Var "y1"))),App (App (Pred "Xi") (Var "G")) (App (Pred "Eq") (App Star (Var "y2")))], left = App (Pred "Eq") (App (App (App (Fun "Cmp") (Var "F")) (Var "G")) (Var "A")), right = App (Pred "Eq") (Var "A")}]
-
-test111 = let 
-              l = App (Pred "Eq") (App (App (Fun "Gs") (Var "A")) (Var "R"))
-              r = App (Pred "Eq") (Var "A")
---              (m, _, cds', l', r'):xs = runNarrowing rls [] l r
-              
-          in l -- loopCheck as rls rls --runNarrowing rls [] l r -- loopCheck as rls [rls !! 3]
---          disp m <+> text "\n" <+>disp l' <+> text "->" <+> disp r' <+> text "\n" <+> vcat (map disp cds')
-
--- loopCheck :: [Form] -> [Rule] -> [Rule] -> [(Rule, Bool)]
