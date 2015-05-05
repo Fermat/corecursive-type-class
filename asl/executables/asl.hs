@@ -25,7 +25,7 @@ main = flip catches handlers $ do
 --  putStrLn $ "Computing\n"
   case args of
     [filename] -> do
-      cnts <- readFile filename;
+      cnts <- readFile filename
       case parseModule filename cnts of
              Left e -> throw e
              Right a -> do putStrLn $ "Parsing success! \n"
