@@ -6,7 +6,8 @@ class TEq A B where
 
 class Functor C where
   fmap :: Functor C => (A -> B) -> C A -> C B
-  
+
+b = let x = fmap in x
 compose  = \ f g x . f (g x) 
 
 instance TEq A B, TEq B C => TEq A C where

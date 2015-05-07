@@ -142,8 +142,10 @@ checkProg (Let xs p) = do
   sub <- lift get
   let cxt = zip names (map tSnd defs)
       bds = zip names (map tFst defs)
-      assump' = concat $ map tTrd defs
-  newCxt <- subGen sub cxt -- not supporting any let-polymorphism now.
+      assump1 = map tTrd defs
+      assump' = concat assump1
+  newCxt <- subGen sub assump1 cxt -- not supporting any let-polymorphism now.
+           
   (p', f, newAssump) <- local (\ y -> newCxt ++ y) $ checkProg p 
   return (Let bds p',f, assump' ++ newAssump) 
   where helper env (t, f) = do
@@ -400,12 +402,15 @@ arityCheck c f n = do
         arity _ = 0
 
 -- not supporting let-polymorphism anymore
-subGen :: Subst -> [(VName, Exp)] -> TCMonad [(VName, TScheme)]
-subGen sub as = do
-  mapM (helper sub) as
-  where helper sub (x, t) = do
+subGen :: Subst -> [[(VName, Exp)]] -> [(VName, Exp)] -> TCMonad [(VName, TScheme)]
+subGen sub assump as = do
+  let assump' = map (map snd) assump
+      as' = zip as assump'
+  mapM (helper sub) as'
+  where helper sub ((x, t), ps) = do
           let t' = applyE sub t
-              a = Scheme [] $ DArrow [] t'
+              p' = map (applyE sub) ps
+              a = Scheme [] $ DArrow p' t'
         --  a <- toTScheme t' 
           return (x, a)
 

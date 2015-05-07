@@ -35,7 +35,7 @@ main = flip catches handlers $ do
                            putStrLn $ "Type Checking success! \n"
                            let env' = convert env
                            print $ disp env'
-                           print $ disp subs
+--                           print $ disp subs
 --                           putStrLn $ "Beginning Evaluation.  \n"
                            evalRes <- runEval env' $ toEval env'
                            norms <- mapM liftEither evalRes
