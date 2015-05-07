@@ -161,6 +161,8 @@ instance Disp ParseError where
               "expecting" "unexpected" "end of input"
               (errorMessages pe)
 
+instance Disp Subst where
+  disp s = vcat $ map (\ (x, y) -> disp x <> text "|->" <> disp y) s
 
 --test = disp (Pi "n" (FVar "Nat") (Arrow (FVar "U") (Arrow (FCons "Vec" [ArgType (FVar "U"),ArgProg (Name "n")]) (FCons "Vec" [ArgType (FVar "U"),ArgProg (Applica (Name "s") (Name "n"))]))))
 --test1 = disp (Data "Nat" [] [("z",FVar "Nat"),("s",Arrow (FVar "Nat") (FVar "Nat"))])

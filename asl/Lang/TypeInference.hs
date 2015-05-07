@@ -21,10 +21,14 @@ import Data.List hiding(partition)
 type TCMonad a = StateT Int (StateT Subst (ReaderT  [(VName, TScheme)] Global)) a  
 
 
-runTypeChecker :: Module -> IO (Either TCError Env)
-runTypeChecker m =
-  runExceptT $ execStateT
-  (runGlobal (runReaderT (evalStateT (evalStateT (checkModule m) 0) []) [])) emptyEnv
+--runTypeChecker :: Module -> IO (Either TCError Env)
+runTypeChecker m = 
+  runExceptT $ runStateT
+  (runGlobal (runReaderT (runStateT (evalStateT (checkModule m) 0) []) [])) emptyEnv
+
+
+  -- runExceptT $ execStateT
+  -- (runGlobal (runReaderT (evalStateT (evalStateT (checkModule m) 0) []) [])) emptyEnv
   
 checkModule :: Module -> TCMonad ()
 checkModule (Module _ []) = return ()
@@ -139,12 +143,12 @@ checkProg (Let xs p) = do
   let cxt = zip names (map tSnd defs)
       bds = zip names (map tFst defs)
       assump' = concat $ map tTrd defs
-  newCxt <- subGen sub cxt 
+  newCxt <- subGen sub cxt -- not supporting any let-polymorphism now.
   (p', f, newAssump) <- local (\ y -> newCxt ++ y) $ checkProg p 
   return (Let bds p',f, assump' ++ newAssump) 
   where helper env (t, f) = do
             (t', ft, as') <- local (\y -> env ++ y) $ checkProg t 
-            unification f ft
+            unification ft f
             return (t', ft, as') 
 
 checkProg (Match p branches) = do
@@ -394,13 +398,15 @@ arityCheck c f n = do
            [(disp "Constructor name: ", disp c)]
   where arity (Arrow _ ft) = arity ft + 1
         arity _ = 0
-  
+
+-- not supporting let-polymorphism anymore
 subGen :: Subst -> [(VName, Exp)] -> TCMonad [(VName, TScheme)]
 subGen sub as = do
   mapM (helper sub) as
   where helper sub (x, t) = do
           let t' = applyE sub t
-          a <- toTScheme t' 
+              a = Scheme [] $ DArrow [] t'
+        --  a <- toTScheme t' 
           return (x, a)
 
 toTScheme :: Exp -> TCMonad TScheme

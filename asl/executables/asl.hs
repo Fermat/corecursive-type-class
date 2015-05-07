@@ -31,10 +31,11 @@ main = flip catches handlers $ do
              Right a -> do putStrLn $ "Parsing success! \n"
                          --  print $ disp a
                            res <- runTypeChecker a
-                           env <- liftEither res
+                           ((_, subs),env) <- liftEither res
                            putStrLn $ "Type Checking success! \n"
                            let env' = convert env
                            print $ disp env'
+                           print $ disp subs
 --                           putStrLn $ "Beginning Evaluation.  \n"
                            evalRes <- runEval env' $ toEval env'
                            norms <- mapM liftEither evalRes
