@@ -1,3 +1,14 @@
 1. Incorporating the non-termination check.
 2. Issue an error for the cases that are not covered
 test
+
+3. I decided not to support implicit let-polymorphism, 
+   if it is not a top level polymorphism, then it will 
+   have to used by demand, i.e. annotation. In the same 
+   spirit as the policy for polymorphic recursion, anytime
+   one want to do something fancy, one has to provide annotation
+   to make sure that he actually know what he is doing. We do
+   not silently support fancy feature. 
+
+4. following the spirit of 3, next step would be supporting
+    type annotation for top-level and let-bindings. 

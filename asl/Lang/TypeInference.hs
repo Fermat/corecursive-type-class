@@ -16,7 +16,7 @@ import qualified Data.Set as S
 import Data.List hiding(partition)
 --import Debug.Trace
 
--- StateT Subst for HM unification, [(VName, TScheme)] for typing local context
+-- StateT Subst for HM unification, [(VName, TScheme)] for typing local context (introduced by lambdas and definitions)
 
 type TCMonad a = StateT Int (StateT Subst (ReaderT  [(VName, TScheme)] Global)) a  
 
