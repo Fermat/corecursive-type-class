@@ -248,14 +248,18 @@ checkInst (Inst (qs, u) defs) = do
   lift $ lift $ lift $ runKinding [ft]    -- kind check
   gEnv <- lift $ lift get
   res <- mapM (\ (x, t) -> checkProg t) defs    -- type check
+  let progs = progDef gEnv
+      tyss = map tSnd res
+--  emit $ (hcat $ map disp tyss) <+> disp u
+  ensureInst tyss u progs -- ensure declared type match with the infered types
   uniRes <- lift get
   ft' <- toTScheme ft
-  let  types = map (applyE uniRes) $ map tSnd res
-       progs = progDef gEnv
+  let  types = map (applyE uniRes) tyss
        datas = map fst $ dataType gEnv
 --  emit $ (hsep $ map disp types)
-  defTypes <- mapM (\n -> checkMethod n progs) methNames
+  defTypes <- mapM (\n -> checkMethod n progs) methNames -- check all implemented methods are defined
   ensureT types defTypes
+
   let impArgs = zip args qs
 --      lEnv = impArgs  ++ [("dict", u) ]
       
@@ -295,12 +299,17 @@ checkInst (Inst (qs, u) defs) = do
         checkMethod a m = case M.lookup a m of
                             Nothing -> tcError "Undeclared method: " [(disp "Method Name:", disp a)]
                             Just (Scheme _ q, _) -> return $ getFType q
-        ensureT t d = zipWithM unify t d
+        ensureT t d = zipWithM unify (t) d
 
         getArgs (FApp p1 p2) = getArgs p1 ++ [p2]
         getArgs _ = []
         makeDef ls cons = foldl' (\ z x -> App z x) cons ls
-
+        ensureInst tys t progs =
+          let resTypes = foldr (\ z x -> Arrow z x) t tys in
+          case M.lookup ("c"++(getPred t)) progs of
+            Nothing -> tcError "Internal Error: " [(disp "from ensureInst", disp "in type checking instance decl")]
+            Just (Scheme _ q, _) -> unification (getFType q) resTypes
+          
 
 toPat p state = 
   let ps = toSpine p
