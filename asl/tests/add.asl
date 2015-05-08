@@ -7,7 +7,7 @@ module add where
 -- two = suc (suc zero)
 -- occur check will fail, meaning scott encoding is 
 -- not typable
-add = \ n m . let f = (\ y . add y m) in n f m 
+add = \ n m . let f = (\ y . add y (suc m)) in n f m 
 
 -- for = add one zero
 -- reduce for
