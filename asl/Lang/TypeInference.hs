@@ -250,7 +250,7 @@ checkInst (Inst (qs, u) defs) = do
   res <- mapM (\ (x, t) -> checkProg t) defs    -- type check
   let progs = progDef gEnv
       tyss = map tSnd res
---  emit $ (hcat $ map disp tyss) <+> disp u
+ --  emit $ (hcat $ map disp tyss) <+> disp u
   ensureInst tyss u progs -- ensure declared type match with the infered types
   uniRes <- lift get
   ft' <- toTScheme ft
@@ -304,11 +304,15 @@ checkInst (Inst (qs, u) defs) = do
         getArgs (FApp p1 p2) = getArgs p1 ++ [p2]
         getArgs _ = []
         makeDef ls cons = foldl' (\ z x -> App z x) cons ls
-        ensureInst tys t progs =
-          let resTypes = foldr (\ z x -> Arrow z x) t tys in
+        ensureInst tys t progs = do
+          t' <- toTScheme t
+          t'' <- freshInst t'
+          let resTypes = foldr (\ z x -> Arrow z x) (getFType t'') tys 
           case M.lookup ("c"++(getPred t)) progs of
             Nothing -> tcError "Internal Error: " [(disp "from ensureInst", disp "in type checking instance decl")]
-            Just (Scheme _ q, _) -> unification (getFType q) resTypes
+            Just (t, _) -> do
+              t' <- freshInst t
+              unification (getFType t') resTypes
           
 
 toPat p state = 
