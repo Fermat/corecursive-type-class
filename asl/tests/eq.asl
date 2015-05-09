@@ -38,9 +38,12 @@ instance Eq A, Eq (List A) => Eq (List A) where
 		                   nil -> false
 				   cons y ys -> and (eq x y) (eq xs ys)
 
+test2 = and (and (eq (s z) z) (eq z z)) (eq z z)
 -- reduce let x = z in true
 test1 =  eq  (cons z (cons z nil)) (cons z (cons z nil))
 reduce test1
+
+reduce test2
 -- (cons z nil) (cons z nil)
 
 -- (s (s (s z))) (s (s (s z)))
