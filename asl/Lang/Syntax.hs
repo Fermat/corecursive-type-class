@@ -21,6 +21,7 @@ data Exp = EVar VName
           | Pos SourcePos Exp
           | FApp Exp Exp
           | Arrow Exp Exp
+          | Forall VName Exp
           | KVar VName
           | Star
           | KArrow Exp Exp
@@ -57,6 +58,7 @@ freeVar :: Exp -> S.Set VName
 freeVar (EVar x) = S.insert x S.empty
 freeVar (Arrow f1 f2) = (freeVar f1) `S.union` (freeVar f2)
 freeVar (FApp f1 f2) = (freeVar f1) `S.union` (freeVar f2)
+freeVar (Forall x f) = S.delete x (freeVar f) 
 
 freeKVar :: Exp -> S.Set VName
 freeKVar Star = S.empty
@@ -65,9 +67,9 @@ freeKVar (KArrow f1 f2) = (freeKVar f1) `S.union` (freeKVar f2)
 
 
 -- note that this is a naive version of getting
--- free variable, since we will consider data
--- type constructors and program definitions to
--- be free variables. So one would need to aware
+-- free variable, since fv  will consider data
+-- type constructors and program definitions as
+-- free variables. So one would need to aware
 -- of this when using fv.
 type Subst = [(VName, Exp)]        
 
@@ -89,9 +91,8 @@ fv (Match p cases) =
 fv (Pos _ t) = fv t
 
 
--- applyQ currently only used at freshInst,
--- which is fine since in that case we don't need to
--- worry about variable capturing.                   
+-- applyQ currently only used at freshInst
+
 applyQ :: Subst -> QType -> QType
 applyQ subs (DArrow fs f) =
   let fs' = map (applyE subs) fs
@@ -108,6 +109,10 @@ applyE subs (Arrow f1 f2) =
   let a1 = applyE subs f1
       a2 = applyE subs f2 in
   Arrow a1 a2
+
+applyE subs (Forall y f) =
+ let subs' = filter (\(x, _) -> not (x == y)) subs in
+ Forall y (applyE subs' f)
 
 applyE subs (FApp f1 f2) =
   let a1 = applyE subs f1
