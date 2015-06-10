@@ -119,17 +119,17 @@ ftype :: Parser Exp
 ftype = buildExpressionParser ftypeOpTable base
 
 base :: Parser Exp
-base = try compound <|> parens ftype
+base = try compound <|> try forall <|> parens ftype
 
 ftypeOpTable :: [[Operator String u (State SourcePos) Exp]]
 ftypeOpTable = [[binOp AssocRight "->" Arrow]]
 
--- forall = do
---   reserved "forall"
---   vars <- many1 setVar
---   reservedOp "."
---   f <- ftype
---   return $ foldr (\ z x -> Forall z x) f vars
+forall = do
+  reserved "forall"
+  vars <- many1 setVar
+  reservedOp "."
+  f <- ftype
+  return $ foldr (\ z x -> Forall z x) f vars
   
 compound = do
   n <- setVar
