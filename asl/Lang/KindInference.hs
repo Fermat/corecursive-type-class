@@ -55,6 +55,10 @@ inferKind (Arrow f1 f2) = do
   unificationK k2 $ Star
   return Star
 
+inferKind (Forall x f) = do
+  k <- inferKind f
+  return Star
+
 combineK :: KSubst -> KSubst -> KSubst
 combineK s2 s1 =
    s2 ++ [(v, applyK s2 t) | (v, t) <- s1] 

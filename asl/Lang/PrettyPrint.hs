@@ -63,7 +63,12 @@ instance Disp Exp where
     dParen (precedence a) t1
     <+> text "->"
     <+> dParen (precedence a - 1) t2
-                           
+
+  disp (a@(Forall x f)) =
+    text "forall" <+> disp x
+    <+> text "."
+    <+> disp f
+
   precedence (FApp _ _) = 10
 
   precedence (Arrow _ _) = 4
