@@ -5,6 +5,10 @@ data Bool where
   true :: Bool
   false :: Bool
 
+data N where
+   zz:: N
+   ss :: N -> N
+
 data Monad M where
   mc :: (forall A . A -> M A) -> (forall A B . M A -> (A -> M B) -> M B) -> Monad M
 
@@ -83,6 +87,10 @@ lBind = \ l f . case l of
                  cons x xs -> append (f x) (lBind xs f)
 listM = mc lUnit lBind
 
+f' = \ g . times (g zz) (g true) 
+-- f = \ g . times (g true) (g one) 
+
+reduce \ g . times (g true) (g one)
 -- class Monad M where
 --    return :: Monad M => A -> M A
 --    bind :: Monad M => M A -> (A -> M B) -> M B
