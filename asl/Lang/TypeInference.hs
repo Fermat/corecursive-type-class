@@ -514,7 +514,10 @@ varBind x t | t == EVar x = return []
                   let datas = map fst $ dataType env
                   if x `elem` datas then
                     case t of
-                      EVar y -> return [(y, EVar x)]
+                      EVar y ->
+                        if not (y `elem` datas) then return [(y, EVar x)]
+                        else tcError "Unification failure: "
+                             [(disp "trying to unify ", disp x),(disp "with ", disp t)]
                       _ -> tcError "Unification failure: "
                            [(disp "trying to unify ", disp x),(disp "with ", disp t)]
                     else 

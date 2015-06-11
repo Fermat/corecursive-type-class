@@ -1,4 +1,4 @@
-{-# LANGUAGE StandaloneDeriving, DeriveDataTypeable, PackageImports,ParallelListComp, FlexibleContexts #-}
+{-#LANGUAGE PackageImports, StandaloneDeriving, DeriveDataTypeable, FlexibleContexts#-}
 module Lang.Parser
        (parseModule) where
 import Lang.Syntax
@@ -66,7 +66,7 @@ preApp op app var x = app (var op) x
 binApp op app var x y = app (app (var op) x) y
 
 deriving instance Typeable P.ParseError
-instance Exception P.ParseError where
+instance Exception P.ParseError 
 
 -- parse module
 gModule :: Parser Module

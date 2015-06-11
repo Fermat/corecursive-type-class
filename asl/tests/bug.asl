@@ -10,7 +10,7 @@ data N where
 data Times A B where
  times :: A -> B -> Times A B
 
-f' = \ g . times (g true) (g zz)
+f' = \ g . times (g true) (g false)
 
 eq = \ x y . case x of
                zz -> case y of
