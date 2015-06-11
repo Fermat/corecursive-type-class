@@ -473,11 +473,13 @@ unification t1 t2 = do
 unify :: Exp -> Exp -> TCMonad Subst
 unify t (Forall y f) = unify (Forall y f) t
 
+-- The following is a simple extension of unification to support data polymorphism a la Jones. 
 unify (Forall y f) t = do
  n <- makeName "X"
  let f' = applyE [(y, EVar n)] f in
    unify f' t
-  
+-----------------------------------
+ 
 unify (Arrow t1 t2) (Arrow a1 a2) = do
   s1 <- unify t1 a1
   s2 <- unify (applyE s1 t2) (applyE s1 a2) 
