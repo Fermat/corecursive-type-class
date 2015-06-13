@@ -20,6 +20,7 @@ import qualified Data.Set as S
 isVar :: Equation -> Bool
 isVar (Var x:ps,e) = True
 isVar (Cons x xs : ps,e) = False
+--isVar a = error $ "efrom isVar" ++ show a
 
 isCon :: Equation -> Bool
 isCon e = not $ isVar e

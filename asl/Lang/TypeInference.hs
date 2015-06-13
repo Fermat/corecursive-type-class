@@ -13,7 +13,7 @@ import Control.Monad.Except
 import qualified Data.Map as M
 import qualified Data.Set as S
 import Data.List hiding(partition)
---import Debug.Trace
+import Debug.Trace
 
 -- StateT Subst for HM unification, [(VName, TScheme)] for typing local context (introduced by lambdas and definitions)
 
@@ -286,8 +286,13 @@ checkInst (Inst (qs, u) defs) = do
  --       emit $ (hsep $ map disp genAssumps)
         name <- makeName "e"
         lift $ lift $ modify (\ e -> extendProgDef name ft' constr e) -- extend instance func
+        
         let def  = makeDef qs (EVar name)
-            pats =  map (\ x -> toPat x gEnv) $ getArgs u
+            Just (kindInfo, False) = lookup u' $ dataType gEnv
+            kinds = flatten kindInfo            
+            args1 = getArgs u
+--            info = zip args1 kinds 
+            pats = map (\ x -> toPat x gEnv) $ args1
         lift $ lift $ modify (\ e -> extendEq u' (pats, def) e)  -- extend functional type class    
         return ()
     else tcError "Required predicates does not match specified predicates: "
@@ -312,24 +317,25 @@ checkInst (Inst (qs, u) defs) = do
             Just (t, _) -> do
               t' <- freshInst t
               unification (getFType t') resTypes
-          
+
 
 toPat p state = 
   let ps = toSpine p
       f = map (helper state) ps  in
   case f of
     ((Cons c []):t) ->
-      let aris = arity c state in
-      if aris == length t
-        then Cons c t
-        else error $ "Wrong arity from toPat"++ show c++show t++show aris
+      -- let aris = arity c state
+      -- in
+      --  if aris == length t
+      Cons c t
+--       else error $ "Wrong arity from toPat"++ show c++show t++show aris++ show p
     ((Var m):[]) ->  Var m
     e -> error "unknown from toPat"
     where helper st (EVar a) = 
             if elem a (map fst $ dataType st)
               then (Cons a [])
               else (Var a)
-          helper st c@(App a b)  = toPat c st
+          helper st c@(FApp a b)  = toPat c st
           helper st (Pos _ p) = helper st p 
 
 toSpine (EVar a) = [EVar a]

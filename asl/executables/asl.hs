@@ -33,7 +33,7 @@ main = flip catches handlers $ do
                            res <- runTypeChecker a
                            ((_, subs),env) <- liftEither res
                            putStrLn $ "Type Checking success! \n"
-                           let env' = convert env
+                           let env' = convert env -- converting the pattern into case-exp
                            print $ disp env'
 --                           print $ disp subs
 --                           putStrLn $ "Beginning Evaluation.  \n"
