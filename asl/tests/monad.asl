@@ -1,8 +1,8 @@
 module monad where
 
 class Monad M where
-    bind :: Monad M => M A -> (A -> M B) -> M B
-    return :: Monad M => A -> M A  
+    bind :: Monad M => forall A . forall B . M A -> (A -> M B) -> M B
+    return :: Monad M => forall A . A -> M A  
 
 data Maybe A where
   nothing :: Maybe A

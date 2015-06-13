@@ -14,8 +14,10 @@ convert env =
   where helper ls = (getFst ls , (map snd ls))
         getFst ((a,_):xs) = a
         helper1 e (n, qs) = let ar = arity n e
+                                Just (kind, _) = lookup n (dataType e)
                                 vars = [makeVar "u" i | i <- [1..ar]]
-                                body = match "u" e ar vars qs (EVar "Error")
+                                vars' = zip vars (flatten kind)
+                                body = match "u" e ar vars' qs (EVar "Error")
                                 close = foldr (\ x y -> Lambda x y) body vars 
                             in (n, close)
 

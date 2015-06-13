@@ -324,6 +324,7 @@ toPat p state =
       f = map (helper state) ps  in
   case f of
     ((Cons c []):t) ->
+
       -- let aris = arity c state
       -- in
       --  if aris == length t
