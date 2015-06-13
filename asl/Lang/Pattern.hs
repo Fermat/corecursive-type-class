@@ -37,26 +37,40 @@ arity v env = case lookup v (dataType env) of
                                kindArity _ = 0
 
   
-match :: VName -> Env -> Int -> [VName] -> [Equation] -> Exp -> Exp
+match :: VName -> Env -> Int -> [(VName, Exp)] -> [Equation] -> Exp -> Exp
 match name env k [] qs def =
   let p = [e | ([], e) <- qs] in -- trace ("spit p "++ show p ++ show qs ++ show def) (head p)
   if null p then def else head p -- trace ("nonempty head") (head p)
   --foldr Applica def [e | ([], e) <- qs]
 --  if null qs then (Name "Error") else let ([], p) = head qs in p
-match name env k (u:us) qs def = foldr (matchVarCon name env k (u:us)) def (partition isVar qs)
+match name env k ((u, kind):us) qs def = foldr (matchVarCon name env k ((u, kind):us)) def (partition isVar qs)
 
 matchVarCon name env k us qs def | isVar $ head qs = matchVar name env k us qs def
 matchVarCon name env k us qs def | otherwise = matchCon name env k us qs def
 
-matchVar name env k (u:us) qs def = match name env k us [(ps, applyE [(v, EVar u)] e) | (Var v : ps, e) <- qs] def
+matchVar name env k ((u, kind):us) qs def =
+  match name env k us [(ps, applyE [(v, EVar u)] e) | (Var v : ps, e) <- qs] def
 
-matchCon name env k (u:us) qs def =
-  Match (EVar u) [matchClause name env c k (u:us) (choose c qs) def | c <- cs]
+matchCon name env k ((u, kind):us) qs def =
+  Match (EVar u) [matchClause name env c k ((u, kind):us) (choose c qs) def | c <- cs, ensure c]
   where cs = constructors env
-        
-matchClause name env c k (u:us) qs def =
-  let k' = arity c env in
-  (c, (us' k'), match name env (k'+ k) ((us' k') ++ us) [(ps' ++ ps, e) | (Cons c ps' : ps, e) <- qs] def )
+        ensure con =
+          let off = length $ flatten kind
+              k' = (arity con env) - off in
+          k' >= 0 
+              
+matchClause name env c k ((u, kind):us) qs def =
+  let
+    ks = flatten kind
+    off = length ks 
+    k' = (arity c env) - off
+    Just (cKind, _) = lookup c $ dataType env
+    ckinds = flatten cKind
+    newkinds = case stripPrefix (reverse ks) (reverse ckinds) of
+                  Nothing -> error "error from matchClause"
+                  Just a -> reverse a
+  in
+   (c, (us' k'), match name env (k'+ k) ((zip (us' k') newkinds) ++ us) [(ps' ++ ps, e) | (Cons c ps' : ps, e) <- qs] def )
   where
     us' q = [makeVar name (i + k) | i <- [1..q]]
 
@@ -81,4 +95,4 @@ env2 = extendData "Nat" Star True env1
 env3 = extendData "Unit" Star True env2
 env4 = extendData "Eq" (KArrow Star Star) False env3
 -- calling convention, 1 is the number of the argument
-test13 = disp $ match "_u" env4  1 ["_u1"] eqs1 (EVar "Error")
+test13 = disp $ match "_u" env4 1 [("_u1", Star)] eqs1 (EVar "Error")

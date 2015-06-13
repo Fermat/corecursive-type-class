@@ -182,4 +182,5 @@ makeName name = do
 flatten :: Exp -> [Exp]
 flatten (Pos _ f) = flatten f
 flatten (Arrow f1 f2) = f1 : flatten f2
+flatten (KArrow f1 f2) = f1 : flatten f2
 flatten _ = []

@@ -9,7 +9,7 @@ data Maybe A where
   just :: A -> Maybe A
 
 instance => Monad Maybe where
-   return = just
    bind = \ x f . case x of
                      just a -> f a
                      nothing -> nothing
+   return = just

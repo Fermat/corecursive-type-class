@@ -319,10 +319,10 @@ toPat p state =
       f = map (helper state) ps  in
   case f of
     ((Cons c []):t) ->
-      let aris = arity c state in
-      if aris == length t
-        then Cons c t
-        else error $ "Wrong arity from toPat"++ show c++show t++show aris
+      -- let aris = arity c state in
+      -- if aris == length t
+      Cons c t
+--        else error $ "Wrong arity from toPat"++ show c++show t++show aris
     ((Var m):[]) ->  Var m
     e -> error "unknown from toPat"
     where helper st (EVar a) = 
