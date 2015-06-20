@@ -143,6 +143,7 @@ instance Disp Decl where
   disp (DataDecl p d) = disp d
   disp (ClassDecl p d) = disp d
   disp (InstDecl p d) = disp d
+  disp (SigDecl p v d) = disp v <+> text "::" <+> disp d
   disp (EvalDecl p) = text "reduce" <+> disp p
 
 -- instance Disp Constraints where

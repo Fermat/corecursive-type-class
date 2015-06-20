@@ -80,7 +80,7 @@ gModule = do
   return $ Module modName bs
 
 gDecl :: Parser Decl
-gDecl =  gDataDecl <|>  instDecl
+gDecl = try sigDecl <|> gDataDecl <|>  instDecl
         <|> classDecl <|> progDecl <|> reduceDecl
 
 setVar :: Parser String
@@ -89,7 +89,15 @@ setVar = do
   when (isLower (head n)) $
     unexpected "Data names must begin with an uppercase letter."
   return n
+-- type signature
 
+sigDecl = do
+  f <- termVar
+  reservedOp "::"
+  t <- ftype
+  pos <- getPosition
+  return $ SigDecl pos f t
+  
 -- datatype
 gDataDecl :: Parser Decl
 gDataDecl = do

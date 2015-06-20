@@ -40,6 +40,7 @@ data Class = Class VName [VName] [(VName, Exp)] deriving Show
 data Decl = ProgDecl SourcePos VName Exp
           | DataDecl SourcePos Datatype 
           | InstDecl SourcePos Inst
+          | SigDecl SourcePos VName Exp
           | ClassDecl SourcePos Class
           | EvalDecl Exp
           | OperatorDecl String Int String
