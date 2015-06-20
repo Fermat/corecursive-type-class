@@ -61,31 +61,32 @@ checkDecl (SigDecl p f t) = do
               [(disp "function ", disp f)]
 
 checkDecl (ProgDecl pos x p) = do
-  n <- makeName "X"
-  let ts = EVar n
-  (p', f, assump) <- local (\ y -> (x, ts):y) $ checkProg p
-  -- subs <- lift $ get
-  -- emit subs
-  -- emit "\n"
-  -- emit assump
-  -- emit "\n"
-  -- emit f
-  -- let f' = applyE subs' f
-  --     f1 = case lookup n subs' of
-  --               Just s -> s
-  --               Nothing -> EVar n
-  unification f (EVar n) `catchError` addErrorPos pos x
-  subs' <- lift $ get
-  -- emit subs'
-  -- subs <- lift $ get
-  let
-      f'' = applyE subs' f
-      assump' = map (\(a , b) -> (a, applyE subs' b)) assump
-      names = map fst assump'
-      preds = map snd assump'
-      newP = foldr (\ x y -> Lambda x y) p' names 
-  sc <- qToTScheme (DArrow preds f'')
-  lift $ lift $ modify (\ e -> extendProgDef x sc newP e)
+  env <- lift $ lift get
+  case M.lookup f $ progDef env of
+    Nothing -> do
+      n <- makeName "X"
+      let ts = EVar n
+      (p', f, assump) <- local (\ y -> (x, ts):y) $ checkProg p
+      unification f (EVar n) `catchError` addErrorPos pos x
+      subs' <- lift $ get
+      let
+        f'' = applyE subs' f
+        assump' = map (\(a , b) -> (a, applyE subs' b)) assump
+        names = map fst assump'
+        preds = map snd assump'
+        newP = foldr (\ x y -> Lambda x y) p' names 
+      sc <- qToTScheme (DArrow preds f'')
+      lift $ lift $ modify (\ e -> extendProgDef x sc newP e)
+    Just (t, y) | y == EVar "undefined" -> do
+      (p', f, assump) <- local (\ y -> (x, ts):y) $ checkProg p
+      unification f t `catchError` addErrorPos pos x
+      let
+        names = map fst assump
+        preds = map snd assump
+        newP = foldr (\ x y -> Lambda x y) p' names 
+      lift $ lift $ modify (\ e -> extendProgDef x t newP e)
+    _ -> error "unknow error from CheckProgDecl" 
+  
 
 checkDecl (DataDecl pos d@(Data n _ _)) = 
   checkData d `catchError` addErrorPos pos n
