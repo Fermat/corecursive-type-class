@@ -119,7 +119,7 @@ ftype :: Parser Exp
 ftype = buildExpressionParser ftypeOpTable base
 
 base :: Parser Exp
-base = try compound <|> try forall <|> parens ftype
+base = try qtype <|> try compound <|> try forall <|> parens ftype
 
 ftypeOpTable :: [[Operator String u (State SourcePos) Exp]]
 ftypeOpTable = [[binOp AssocRight "->" Arrow]]
@@ -142,12 +142,9 @@ compoundArgs =
   ((try (setVar >>= \ n -> return $ EVar n))
    <|> try (parens ftype))
 
-qtype :: Parser QType
 qtype = do
   qs <- sepBy compound comma
-  if null qs then do
-    f <- ftype
-    return $ DArrow [] f
+  if null qs then unexpected "Empty predicates"
     else do
     reservedOp "=>"
     f <- ftype
@@ -232,7 +229,7 @@ classDecl = do
   where medths = do
           c <- termVar
           reservedOp "::"
-          t <- qtype
+          t <- ftype
           return (c,t)
         params = many1 setVar
 

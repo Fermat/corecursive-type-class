@@ -15,9 +15,9 @@ import qualified Data.Set as S
 import Data.List hiding(partition)
 import Debug.Trace
 
--- StateT Subst for HM unification, [(VName, TScheme)] for typing local context (introduced by lambdas and definitions)
+-- StateT Subst for HM unification, ReaderT for typing local context (introduced by lambdas and definitions)
 
-type TCMonad a = StateT Int (StateT Subst (ReaderT  [(VName, TScheme)] Global)) a  
+type TCMonad a = StateT Int (StateT Subst (ReaderT  [(VName, Exp)] Global)) a  
 
 
 --runTypeChecker :: Module -> IO (Either TCError Env)
@@ -53,7 +53,7 @@ checkDecl (EvalDecl p) = do
 
 checkDecl (ProgDecl pos x p) = do
   n <- makeName "X"
-  let ts = Scheme [] $ DArrow [] (EVar n)
+  let ts = EVar n
   (p', f, assump) <- local (\ y -> (x, ts):y) $ checkProg p
   -- subs <- lift $ get
   -- emit subs
@@ -122,7 +122,7 @@ checkProg (App t1 t2) = do
 
 checkProg (Lambda x t) = do
   n <- makeName "X"
-  let sc = Scheme [] $ DArrow [] (EVar n) 
+  let sc = EVar n
       ty = EVar n
       new = (x, sc)
   (t', ty', newA) <- local (\y -> new:y) $ checkProg t 
@@ -132,7 +132,7 @@ checkProg (Lambda x t) = do
 
 checkProg (Let xs p) = do
   ns <- mapM (\ x -> makeName "X") xs
-  let tns = map (\ x -> Scheme [] $ DArrow [] (EVar x)) ns
+  let tns = map EVar ns
       fns = map EVar ns
       names = map fst xs
       letEnv = zip names tns

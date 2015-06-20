@@ -69,6 +69,11 @@ instance Disp Exp where
     <+> text "."
     <+> disp f
 
+  disp (DArrow ts f) =
+    if null ts then disp f
+    else (hsep $ punctuate comma (map disp ts))
+         <+> text "=>" <+> disp f
+
   precedence (FApp _ _) = 10
 
   precedence (Arrow _ _) = 4
@@ -91,23 +96,12 @@ instance Disp Equation where
     where helper (Var x) = disp x
           helper a = parens $ disp a
           
-instance Disp QType where
-  disp (DArrow ts f) =
-    if null ts then disp f
-    else (hsep $ punctuate comma (map disp ts))
-         <+> text "=>" <+> disp f
-
-instance Disp TScheme where
-  disp (Scheme xs t) =
-    if null xs then disp t
-    else text "forall" <+> (hsep $ map disp xs)
-         <+>text "."<+>disp t
-
-instance Disp (VName, TScheme) where
-  disp (v, sc) = disp v <+> text "::" <+> disp sc
 
 instance Disp (VName, Exp) where
-  disp (v, sc) = disp v <+> text "mapsto" <+> disp sc
+  disp (v, sc) = disp v <+> text "::" <+> disp sc
+
+-- instance Disp (VName, Exp) where
+--   disp (v, sc) = disp v <+> text "mapsto" <+> disp sc
 
 instance Disp Datatype where
   disp (Data d params cons) = 

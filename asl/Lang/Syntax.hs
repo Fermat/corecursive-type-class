@@ -22,14 +22,11 @@ data Exp = EVar VName
           | FApp Exp Exp
           | Arrow Exp Exp
           | Forall VName Exp
+          | DArrow [Exp] Exp
           | KVar VName
           | Star
           | KArrow Exp Exp
           deriving (Show, Eq, Ord)
-
-data QType = DArrow [Exp] Exp deriving Show
-
-data TScheme = Scheme [VName] QType deriving Show
 
 data Datatype = Data VName [VName] [(VName,Exp)]    
               deriving (Show)
@@ -38,7 +35,7 @@ data Module = Module VName [Decl] deriving (Show)
 
 data Inst = Inst ([Exp], Exp) [(VName, Exp)] deriving Show
 
-data Class = Class VName [VName] [(VName,QType)] deriving Show    
+data Class = Class VName [VName] [(VName, Exp)] deriving Show    
 
 data Decl = ProgDecl SourcePos VName Exp
           | DataDecl SourcePos Datatype 
@@ -91,14 +88,6 @@ fv (Match p cases) =
 fv (Pos _ t) = fv t
 
 
--- applyQ currently only used at freshInst
-
-applyQ :: Subst -> QType -> QType
-applyQ subs (DArrow fs f) =
-  let fs' = map (applyE subs) fs
-      f' = applyE subs f in
-  DArrow fs' f'
-      
 applyE :: Subst -> Exp -> Exp 
 applyE subs (EVar x) =
   case lookup x subs of
@@ -137,6 +126,11 @@ applyE subs (Let xs p) =
   where helper subs (x, def) = (x, applyE subs def)
 
 applyE subs (Pos _ p) = applyE subs p
+
+applyE subs (DArrow fs f) =
+  let fs' = map (applyE subs) fs
+      f' = applyE subs f in
+  DArrow fs' f'
 
 firstline (Inst a xs) = Inst a [head xs]
 

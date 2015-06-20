@@ -5,9 +5,9 @@ import Lang.Syntax
 import Lang.PrettyPrint
 import Lang.Monad
 import Lang.Eval
-import Lang.Pattern
-import Lang.TypeInference
-import Lang.PMCompile
+-- import Lang.Pattern
+-- import Lang.TypeInference
+-- import Lang.PMCompile
 import Control.Monad.Except hiding (join)
 import Text.PrettyPrint
 import Text.Parsec(ParseError)
@@ -29,7 +29,8 @@ main = flip catches handlers $ do
       case parseModule filename cnts of
              Left e -> throw e
              Right a -> do putStrLn $ "Parsing success! \n"
-                         --  print $ disp a
+                           print $ disp a
+                           {-
                            res <- runTypeChecker a
                            ((_, subs),env) <- liftEither res
                            putStrLn $ "Type Checking success! \n"
@@ -54,7 +55,7 @@ main = flip catches handlers $ do
                            --     print $ disp env
                                
 --look at local variable                              print $ disp e
-
+-}
 
     _ -> putStrLn "usage: asl <filename>"
   where handlers = [Handler parseHandler, Handler typeHandler]

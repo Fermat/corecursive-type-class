@@ -21,7 +21,7 @@ newtype Global a = Global { runGlobal :: (StateT Env (ExceptT TCError IO)) a}
   deriving (Functor, Monad, Applicative, MonadState Env, MonadError TCError, MonadIO)
 
 
-data Env = Env{ progDef :: M.Map VName (TScheme, Exp),  -- (type, def)
+data Env = Env{ progDef :: M.Map VName (Exp, Exp),  -- (type, def)
                 dataType :: [(VName, (Exp, Bool))], -- (name, kind, whether it is genuine data)
                 toEval :: [Exp], -- progs
                 equations :: [(VName, Equation)]
@@ -31,7 +31,7 @@ data Env = Env{ progDef :: M.Map VName (TScheme, Exp),  -- (type, def)
 emptyEnv :: Env
 emptyEnv = Env {progDef = M.empty, dataType = [], toEval = [], equations = []}
                   
-extendProgDef :: VName -> TScheme -> Exp -> Env -> Env
+extendProgDef :: VName -> Exp -> Exp -> Env -> Env
 extendProgDef v ts t e@(Env {progDef}) = e{progDef = M.insert v (ts, t) progDef}
 
 extendEval :: Exp -> Env -> Env

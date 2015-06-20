@@ -15,12 +15,12 @@ library
                       Lang.Syntax,
                       Lang.PrettyPrint,
                       Lang.Monad,
-                      Lang.TypeInference,
-                      Lang.Formulas,
-                      Lang.Eval,
-                      Lang.KindInference,
-                      Lang.PMCompile,
-                      Lang.Pattern
+                      -- Lang.TypeInference,
+                      -- Lang.Formulas,
+                      Lang.Eval
+                      -- Lang.KindInference,
+                      -- Lang.PMCompile,
+                      -- Lang.Pattern
   -- other-modules:       
   build-depends: base >= 4, parsec >= 3.0, array, indents >= 0.3.0, pretty, mtl >= 2.2.1, containers, transformers >= 0.4.1.0, cmdargs, parallel >= 3.2.0.4   
 
