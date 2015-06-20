@@ -59,6 +59,11 @@ inferKind (Forall x f) = do
   k <- inferKind f
   return Star
 
+inferKind (DArrow exps f) = do
+  ks <- mapM inferKind exps
+  k<- inferKind f
+  return Star
+
 combineK :: KSubst -> KSubst -> KSubst
 combineK s2 s1 =
    s2 ++ [(v, applyK s2 t) | (v, t) <- s1] 

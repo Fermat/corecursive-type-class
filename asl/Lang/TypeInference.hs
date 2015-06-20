@@ -51,6 +51,15 @@ checkDecl (EvalDecl p) = do
   lift $ lift $ modify (\ e -> extendEval term e)
   return ()
 
+checkDecl (SigDecl p f t) = do
+  lift $ lift $ lift $ runKinding [t]
+  env <- lift $ lift get
+  case M.lookup f $ progDef env of
+    Nothing ->
+      lift $ lift $ modify (\ e -> extendProgDef f t (EVar "undefined") e)
+    Just _ -> tcError "function has already been defined: "
+              [(disp "function ", disp f)]
+
 checkDecl (ProgDecl pos x p) = do
   n <- makeName "X"
   let ts = EVar n
@@ -533,8 +542,8 @@ varBind x t | t == EVar x = return []
                     return [(x, t)]
 
   
-freshInst :: TScheme -> TCMonad QType
-freshInst (Scheme xs t) =
+freshInst :: Exp -> TCMonad Exp
+freshInst (Forall xs t) =
   if null xs
   then return t
   else do
