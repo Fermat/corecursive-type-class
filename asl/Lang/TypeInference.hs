@@ -57,6 +57,7 @@ checkDecl (SigDecl p f t) = do
   case M.lookup f $ progDef env of
     Nothing -> do
       t' <- toTScheme t
+      emit t'
       lift $ lift $ modify (\ e -> extendProgDef f t' (EVar "undefined") e)
     Just _ -> tcError "function has already been defined: "
               [(disp "function ", disp f)]
@@ -84,6 +85,9 @@ checkDecl (ProgDecl pos x p) = do
         lift $ lift $ modify (\ e -> extendProgDef x sc newP e)
     Just (t, y) | y == EVar "undefined" -> do
       (p', f, assump) <- local (\ y -> (x, t):y) $ checkProg p
+--      (p', f, assump) <- checkProg p
+      -- emit f
+      -- emit t
       unification f t `catchError` addErrorPos pos x
       let
         names = map fst assump
@@ -466,6 +470,11 @@ getFType (DArrow _ f) = f
 
 -- tcError :: Disp d => d -> [(Doc, Doc)] -> TCMonad a
 
+--testUnify :: Exp -> Exp -> Subst
+testUnify t1 t2 =
+  runExceptT $ runStateT
+  (runGlobal (runReaderT (runStateT (evalStateT (unify t1 t2) 0) []) [])) emptyEnv
+testU = testUnify (Arrow (Arrow (EVar "U") (EVar "U")) (EVar "U"))  (Forall "X" (Arrow (Arrow (Forall "Y" (EVar "Y")) (EVar "X")) (EVar "X")))
 
 combine :: Subst -> Subst -> Subst
 combine s2 s1 =
@@ -477,6 +486,10 @@ combine s2 s1 =
 unification :: Exp -> Exp -> TCMonad ()
 unification t1 t2 = do
   subs <- lift get
+  -- emit $ text "this is t1" <+> disp t1
+  -- emit $ text "this is t2" <+> disp t2
+  -- emit $  (applyE subs t1)
+  -- emit $  (applyE subs t2)
   new <- unify (applyE subs t1) (applyE subs t2)
   lift $ put $ combine new subs
 
@@ -486,13 +499,13 @@ unification t1 t2 = do
 -- will be supported as well.
 
 unify :: Exp -> Exp -> TCMonad Subst
-unify t (Forall y f) = unify (Forall y f) t
-
 -- The following is a simple extension of unification to support data polymorphism a la Jones. 
 unify (Forall y f) t = do
  n <- makeName "X"
  let f' = applyE [(y, EVar n)] f in
    unify f' t
+   
+unify t (Forall y f) = unify (Forall y f) t   
 -----------------------------------
  
 unify (Arrow t1 t2) (Arrow a1 a2) = do

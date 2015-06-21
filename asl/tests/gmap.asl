@@ -16,6 +16,7 @@ map = \ f l . case l of
                   nil -> nil
                   cons x xs -> cons (f x) xs
 
+g = g
 -- turns out it is a bug in the type checker.
 zipWith :: (A -> B -> C) -> List A -> List B -> List C
 zipWith = \ f l1 l2 . case l1 of
@@ -36,7 +37,7 @@ data Nested A where
   ep :: Nested A
   con :: A -> Nested (List A) -> Nested A
 
--- len :: Nested A -> Nat
+len :: Nested A -> Nat
 len = \ x . case x of 
              ep -> z
              con a b -> s (len b)
@@ -46,3 +47,4 @@ len = \ x . case x of
 --   gmapQ :: Data C A, Eq E B => (forall B . Data C B => B -> R) -> A -> List R
 
 -- f :: forall A . (A -> A) -> List A -> List A
+
