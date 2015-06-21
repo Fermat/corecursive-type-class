@@ -3,7 +3,7 @@ import Lang.Syntax
 import Lang.PrettyPrint
 import Lang.Monad
 import Lang.KindInference
-import Lang.Pattern(arity)
+-- import Lang.Pattern(arity)
 import Lang.Formulas hiding(combine)
 import Text.Parsec.Pos
 import Text.PrettyPrint hiding(sep)
@@ -55,8 +55,9 @@ checkDecl (SigDecl p f t) = do
   lift $ lift $ lift $ runKinding [t]
   env <- lift $ lift get
   case M.lookup f $ progDef env of
-    Nothing ->
-      lift $ lift $ modify (\ e -> extendProgDef f t (EVar "undefined") e)
+    Nothing -> do
+      t' <- toTScheme t
+      lift $ lift $ modify (\ e -> extendProgDef f t' (EVar "undefined") e)
     Just _ -> tcError "function has already been defined: "
               [(disp "function ", disp f)]
 
@@ -205,15 +206,18 @@ checkBranch datatype (c, args, t) = do
 
 checkData :: Datatype -> TCMonad ()
 checkData (Data d params cons) = do
---  lift $ lift $ modify (\ e -> extendData d e)
-  let d1 = if null params then EVar d else makeFType d params
-  subst <- lift $ lift $ lift $ runKinding $ getTypes cons
-  case lookup d subst of
-    Nothing -> tcError "Unknown error for Kinding: " []
-    Just k -> lift $ lift $ modify (\ e -> extendData d (ground k) True e)
-  mapM_ (checkCons d1) cons
-  mapM_ extendCons cons
-  return ()
+  env <- lift $ lift get
+  case lookup d $ dataType env of
+    Nothing -> do
+      let d1 = if null params then EVar d else makeFType d params
+      subst <- lift $ lift $ lift $ runKinding $ getTypes cons
+      case lookup d subst of
+        Nothing -> tcError "Unknown error for Kinding: " []
+        Just k -> lift $ lift $ modify (\ e -> extendData d (ground k) True e)
+      mapM_ (checkCons d1) cons
+      mapM_ extendCons cons
+      return ()
+    _ ->  tcError ("Repeated definition of "++show d) []
   where getTypes cs = map (\(x,y) -> y) cs
         makeFType d params = foldl' (\ z x -> FApp z x) (EVar d) (map EVar params) -- $ map EVar (d:params)
         checkCons d (c, f) = do

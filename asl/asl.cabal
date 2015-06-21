@@ -17,8 +17,8 @@ library
                       Lang.Monad,
                       Lang.TypeInference,
                       -- Lang.Formulas,
-                      Lang.Eval
-                      -- Lang.KindInference,
+                      Lang.Eval,
+                      Lang.KindInference
                       -- Lang.PMCompile,
                       -- Lang.Pattern
   -- other-modules:       
