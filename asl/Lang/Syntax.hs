@@ -55,6 +55,7 @@ type Equation = ([Pattern], Exp)
 freeVar :: Exp -> S.Set VName
 freeVar (EVar x) = S.insert x S.empty
 freeVar (Arrow f1 f2) = (freeVar f1) `S.union` (freeVar f2)
+freeVar (DArrow fs f2) = S.unions $ map freeVar (f2:fs)
 freeVar (FApp f1 f2) = (freeVar f1) `S.union` (freeVar f2)
 freeVar (Forall x f) = S.delete x (freeVar f) 
 

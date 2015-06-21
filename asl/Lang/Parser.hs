@@ -152,9 +152,9 @@ compoundArgs =
 
 qtype = do
   qs <- sepBy compound comma
+  reservedOp "=>"
   if null qs then unexpected "Empty predicates"
     else do
-    reservedOp "=>"
     f <- ftype
     return $ DArrow qs f
     

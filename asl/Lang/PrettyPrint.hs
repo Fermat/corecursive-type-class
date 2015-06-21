@@ -70,9 +70,7 @@ instance Disp Exp where
     <+> disp f
 
   disp (DArrow ts f) =
-    if null ts then disp f
-    else (hsep $ punctuate comma (map disp ts))
-         <+> text "=>" <+> disp f
+    (hsep $ punctuate comma (map disp ts)) <+> text "=>" <+> disp f
 
   precedence (FApp _ _) = 10
 

@@ -75,7 +75,8 @@ checkDecl (ProgDecl pos x p) = do
         names = map fst assump'
         preds = map snd assump'
         newP = foldr (\ x y -> Lambda x y) p' names 
-      sc <- qToTScheme (DArrow preds f'')
+      if null preds then do sc <- toTScheme f''
+        else do sc <- toTScheme (DArrow preds f'')
       lift $ lift $ modify (\ e -> extendProgDef x sc newP e)
     Just (t, y) | y == EVar "undefined" -> do
       (p', f, assump) <- local (\ y -> (x, ts):y) $ checkProg p
@@ -102,23 +103,21 @@ checkProg ::  Exp -> TCMonad (Exp, Exp, [(VName, Exp)])
 checkProg (EVar y) = do
   tcAssump <- ask
   case lookup y tcAssump of
-    Just sc -> do
-      ni <- freshInst sc
-      return ((EVar y), getFType ni, [])
+    Just sc -> 
+      return ((EVar y), sc, [])
     Nothing -> do
       env <- lift $ lift get
       case M.lookup y $ progDef env of
         Just (ts, _) -> do
           qt <- freshInst ts
           case qt of
-            DArrow [] ft -> return ((EVar y),ft, [])
             DArrow xs ft -> do
               newVars <- mapM (\ x -> makeName "e") xs
               let zs = zip newVars xs 
-              --    env' =  zs ++ assump
                   pvars = map EVar newVars 
                   p = foldl' (\ x y -> App x y) (EVar y) pvars
               return (p, ft, zs)
+            ft -> return ((EVar y),ft, [])
         Nothing ->
           tcError "Undefined variable: "
           [(disp "Variable ", disp y)]
@@ -142,10 +141,9 @@ checkProg (Lambda x t) = do
 
 checkProg (Let xs p) = do
   ns <- mapM (\ x -> makeName "X") xs
-  let tns = map EVar ns
-      fns = map EVar ns
+  let fns = map EVar ns
       names = map fst xs
-      letEnv = zip names tns
+      letEnv = zip names fns
       dets = zip (map snd xs) fns
   defs <- mapM (helper letEnv) dets
   sub <- lift get
@@ -444,24 +442,17 @@ subGen sub assump as = do
         --  a <- toTScheme t' 
           return (x, a)
 
-toTScheme :: Exp -> TCMonad TScheme
+toTScheme :: Exp -> TCMonad Exp
 toTScheme ft = do
   env <- lift $ lift get
   let def = map fst $ dataType env 
-  return $ Scheme (nub [ x | x <- S.toList $ freeVar ft, not (elem x def)]) $ DArrow [] ft
+  return $ foldr (\ z x -> Forall z x) ft (nub [ x | x <- S.toList $ freeVar ft, not (elem x def)]) 
 
-qToTScheme :: QType -> TCMonad TScheme
-qToTScheme (DArrow qs ft) = do
-  env <- lift $ lift get
-  let def = map fst $ dataType env
-      qvars = S.unions $ map freeVar qs
---  emit $ show def
-  return $ Scheme (nub [ x | x <- S.toList $ S.union qvars  (freeVar ft), not (elem x def)]) $ DArrow qs ft
 
-qToFType :: QType -> Exp
+qToFType :: Exp -> Exp
 qToFType (DArrow xs f) = foldl' (\ z x -> Arrow z x) f xs
 
-getFType :: QType -> Exp
+getFType :: Exp -> Exp
 getFType (DArrow _ f) = f
 
 --getPred :: QType -> [FType]
@@ -542,15 +533,16 @@ varBind x t | t == EVar x = return []
                     else 
                     return [(x, t)]
 
-  
+
+getVars (Forall x t) res = getVars t (x:res)
+getVars t a = (a, t)
+
 freshInst :: Exp -> TCMonad Exp
-freshInst (Forall xs t) =
-  if null xs
-  then return t
-  else do
-   newVars <- mapM (\ x -> makeName "X") xs
+freshInst t = do
+   let (vs, t') = getVars t
+   newVars <-  map (\ x -> makeName "X") vs
    let substs = zip xs (map (\ y -> EVar y) newVars) in
-     return $ applyQ substs t
+     return $ applyE substs t'
 
 
 
