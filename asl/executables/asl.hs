@@ -6,7 +6,7 @@ import Lang.PrettyPrint
 import Lang.Monad
 import Lang.Eval
 -- import Lang.Pattern
--- import Lang.TypeInference
+import Lang.TypeInference
 -- import Lang.PMCompile
 import Control.Monad.Except hiding (join)
 import Text.PrettyPrint
@@ -30,14 +30,17 @@ main = flip catches handlers $ do
              Left e -> throw e
              Right a -> do putStrLn $ "Parsing success! \n"
                            print $ disp a
-                           {-
+
                            res <- runTypeChecker a
                            ((_, subs),env) <- liftEither res
                            putStrLn $ "Type Checking success! \n"
+                           print $ disp env
+{-                                                      
                            let env' = convert env -- converting the pattern into case-exp
                            print $ disp env'
 --                           print $ disp subs
 --                           putStrLn $ "Beginning Evaluation.  \n"
+                           
                            evalRes <- runEval env' $ toEval env'
                            norms <- mapM liftEither evalRes
                            let norms' = zip [1..] norms

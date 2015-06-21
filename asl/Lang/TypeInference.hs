@@ -62,7 +62,7 @@ checkDecl (SigDecl p f t) = do
 
 checkDecl (ProgDecl pos x p) = do
   env <- lift $ lift get
-  case M.lookup f $ progDef env of
+  case M.lookup x $ progDef env of
     Nothing -> do
       n <- makeName "X"
       let ts = EVar n
@@ -75,11 +75,14 @@ checkDecl (ProgDecl pos x p) = do
         names = map fst assump'
         preds = map snd assump'
         newP = foldr (\ x y -> Lambda x y) p' names 
-      if null preds then do sc <- toTScheme f''
-        else do sc <- toTScheme (DArrow preds f'')
-      lift $ lift $ modify (\ e -> extendProgDef x sc newP e)
+      if null preds then do
+        sc <- toTScheme f''
+        lift $ lift $ modify (\ e -> extendProgDef x sc newP e)
+        else do
+        sc <- toTScheme (DArrow preds f'')
+        lift $ lift $ modify (\ e -> extendProgDef x sc newP e)
     Just (t, y) | y == EVar "undefined" -> do
-      (p', f, assump) <- local (\ y -> (x, ts):y) $ checkProg p
+      (p', f, assump) <- local (\ y -> (x, t):y) $ checkProg p
       unification f t `catchError` addErrorPos pos x
       let
         names = map fst assump
@@ -92,11 +95,11 @@ checkDecl (ProgDecl pos x p) = do
 checkDecl (DataDecl pos d@(Data n _ _)) = 
   checkData d `catchError` addErrorPos pos n
 
-checkDecl (InstDecl pos inst) =
-  checkInst inst `catchError` addErrorPos pos (show $ disp (firstline inst))
+-- checkDecl (InstDecl pos inst) =
+--   checkInst inst `catchError` addErrorPos pos (show $ disp (firstline inst))
 
-checkDecl (ClassDecl pos c) =   
-  checkClass c -- `catchError` addProgErrorPos pos c
+-- checkDecl (ClassDecl pos c) =   
+--   checkClass c -- `catchError` addProgErrorPos pos c
   
 -- (term, type, predicates assumptions)
 checkProg ::  Exp -> TCMonad (Exp, Exp, [(VName, Exp)])
@@ -109,7 +112,8 @@ checkProg (EVar y) = do
       env <- lift $ lift get
       case M.lookup y $ progDef env of
         Just (ts, _) -> do
-          qt <- freshInst ts
+          ts' <- toTScheme ts
+          qt <- freshInst ts'
           case qt of
             DArrow xs ft -> do
               newVars <- mapM (\ x -> makeName "e") xs
@@ -186,7 +190,8 @@ checkBranch datatype (c, args, t) = do
   case M.lookup c $ progDef env of
     Nothing -> tcError "Undefined data constructor: "
            [(disp "Constructor name: ", disp c)]
-    Just (Scheme vars (DArrow [] ty), _) -> do
+    Just (t', _) -> do
+      let (vars, ty) = getVars t' []
       arityCheck c ty (length args)
       newNames <- mapM (\ x -> makeName "X") vars
       let newVars = map EVar newNames
@@ -194,8 +199,7 @@ checkBranch datatype (c, args, t) = do
           newTy = applyE subs ty
           d1 = getDataType newTy
           typs = flatten newTy
-          typs' = map (\ x -> Scheme [] $ DArrow [] x ) typs
-          newCxt = zip args typs'
+          newCxt = zip args typs
       unification d1 datatype
       local (\ y -> newCxt ++ y) $ checkProg t 
 
@@ -220,7 +224,7 @@ checkData (Data d params cons) = do
         extendCons (c, f) = do
           s <- toTScheme f
           lift $ lift $ modify (\ e -> extendProgDef c s (EVar c) e)
-
+{-
 checkClass :: Class -> TCMonad ()
 checkClass (Class u params meths) = do
   let fts = map (\ (x, q) -> getFType q) meths
@@ -325,7 +329,7 @@ checkInst (Inst (qs, u) defs) = do
             Just (t, _) -> do
               t' <- freshInst t
               unification (getFType t') resTypes
-
+-}
 
 toPat p state = 
   let ps = toSpine p
@@ -430,7 +434,7 @@ arityCheck c f n = do
         arity _ = 0
 
 -- not supporting let-polymorphism anymore
-subGen :: Subst -> [[(VName, Exp)]] -> [(VName, Exp)] -> TCMonad [(VName, TScheme)]
+subGen :: Subst -> [[(VName, Exp)]] -> [(VName, Exp)] -> TCMonad [(VName, Exp)]
 subGen sub assump as = do
   let assump' = map (map snd) assump
       as' = zip as assump'
@@ -438,8 +442,7 @@ subGen sub assump as = do
   where helper sub ((x, t), ps) = do
           let t' = applyE sub t
               p' = map (applyE sub) ps
-              a = Scheme [] $ DArrow p' t'
-        --  a <- toTScheme t' 
+              a = DArrow p' t'
           return (x, a)
 
 toTScheme :: Exp -> TCMonad Exp
@@ -539,9 +542,9 @@ getVars t a = (a, t)
 
 freshInst :: Exp -> TCMonad Exp
 freshInst t = do
-   let (vs, t') = getVars t
-   newVars <-  map (\ x -> makeName "X") vs
-   let substs = zip xs (map (\ y -> EVar y) newVars) in
+   let (vs, t') = getVars t []
+   newVars <-  mapM (\ x -> makeName "X") vs
+   let substs = zip vs (map (\ y -> EVar y) newVars) in
      return $ applyE substs t'
 
 
