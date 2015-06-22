@@ -18,7 +18,8 @@ mapI = \ f s . case s of
                  zero -> zero
                  succ x -> succ (f x)
 
-mapT :: forall A B . (A -> B) -> Term A -> Term B
+-- It does not work because in this case one has to instantiate lambda bound type...
+-- mapT :: forall A B . (A -> B) -> Term A -> Term B
 mapT = fixMT (\ mt . \ f t .
                       case t of
                          var x -> var (f x)
