@@ -267,22 +267,32 @@ instDecl = do
           t <- prog
           return (c,t)
 
+prefix = do
+  reserved "forall"
+  vars <- many1 setVar
+  reservedOp "."
+  return vars
+
 singleG = 
   try manyG <|> try lin <|> try single
   where
     single = do
+      vs <- option [] prefix
       x <- pred
-      return $ Imply [] x
+      return $ foldr (\ z x -> Forall z x) (Imply [] x) vs
+      
     manyG = do
+      vs <- option [] prefix
       bs <- parens $ sepBy1 singleG comma
       reservedOp "=>"
       u <- pred
-      return $ Imply bs u
+      return $ foldr (\ z x -> Forall z x) (Imply bs u) vs
     lin = do
+      vs <- option [] prefix
       y <- pred
       reservedOp "=>"
       x <- pred
-      return $ Imply [y] x
+      return $ foldr (\ z x -> Forall z x) (Imply [y] x) vs
         
 lemmaDecl :: Parser Decl
 lemmaDecl = do
