@@ -7,6 +7,7 @@ import Prelude hiding (pred)
 import Text.Parsec hiding (ParseError,Empty, State)
 import qualified Text.Parsec as P
 import Text.Parsec.Language
+import Text.Parsec.Char
 import Text.Parsec.Expr(Operator(..),Assoc(..),buildExpressionParser)
 import qualified Text.Parsec.Token as Token
 import Text.Parsec.Indent
@@ -80,8 +81,8 @@ gModule = do
   return $ Module modName bs
 
 gDecl :: Parser Decl
-gDecl =  gDataDecl <|>  instDecl
-        <|> classDecl <|> progDecl <|> reduceDecl
+gDecl =  try gDataDecl <|>  try instDecl
+        <|> try classDecl <|> try progDecl <|> try reduceDecl <|> lemmaDecl
 
 setVar :: Parser String
 setVar = do
@@ -265,7 +266,31 @@ instDecl = do
           reservedOp "="
           t <- prog
           return (c,t)
+
+singleG = 
+  try manyG <|> try lin <|> try single
+  where
+    single = do
+      x <- pred
+      return $ Imply [] x
+    manyG = do
+      bs <- parens $ sepBy1 singleG comma
+      reservedOp "=>"
+      u <- pred
+      return $ Imply bs u
+    lin = do
+      y <- pred
+      reservedOp "=>"
+      x <- pred
+      return $ Imply [y] x
         
+lemmaDecl :: Parser Decl
+lemmaDecl = do
+  reserved "lemma"
+  a <- singleG
+  pos <- getPosition  
+  return $ LemmaDecl pos a
+
 -----------------------Positions -------
   
 wrapPos :: Parser Exp -> Parser Exp
@@ -296,7 +321,7 @@ gottlobStyle = Token.LanguageDef
                     "by", "from", "in", "let", "simpCmp", "invSimp",
                     "case", "of",
                     "data", "if", "then", "else",
-                    "theorem", "proof", "qed",
+                    "theorem", "proof", "qed", "lemma",
                     "show",
                     "where", "module",
                     "infix", "infixl", "infixr", "pre", "post",

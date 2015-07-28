@@ -29,8 +29,8 @@ main = flip catches handlers $ do
       case parseModule filename cnts of
              Left e -> throw e
              Right a -> do putStrLn $ "Parsing success! \n"
-                         --  print $ disp a
-                           res <- runTypeChecker a
+                           print $ disp a
+{-                           res <- runTypeChecker a
                            ((_, subs),env) <- liftEither res
                            putStrLn $ "Type Checking success! \n"
                            let env' = convert env -- converting the pattern into case-exp
@@ -42,7 +42,7 @@ main = flip catches handlers $ do
                            let norms' = zip [1..] norms
                            putStrLn $ "Result of evaluation.  \n"
                            mapM_ (\ (i, t) -> print (int i <+>  text ":"<+> disp t)) norms'
-
+-}
                            -- let (Module v a') = a
                            -- ensureTypeCheck a'
                            -- putStrLn $ "Preprocessing.. \n"

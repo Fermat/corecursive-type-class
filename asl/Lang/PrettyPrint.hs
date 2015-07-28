@@ -69,6 +69,11 @@ instance Disp Exp where
     <+> text "."
     <+> disp f
 
+  disp (a@(Imply xs h)) =
+    text "(" <+> (hsep $ punctuate comma (map disp xs))
+    <+> text ") =>"
+    <+> disp h
+
   precedence (FApp _ _) = 10
 
   precedence (Arrow _ _) = 4
@@ -150,7 +155,7 @@ instance Disp Decl where
   disp (ClassDecl p d) = disp d
   disp (InstDecl p d) = disp d
   disp (EvalDecl p) = text "reduce" <+> disp p
-
+  disp (LemmaDecl p exp) = text "lemma" <+> disp exp
 -- instance Disp Constraints where
 --   disp l = vcat $ map dispPair l
 --     where dispPair (t1,t2) = disp t1 <+> text "=" <+> disp t2

@@ -25,6 +25,7 @@ data Exp = EVar VName
           | KVar VName
           | Star
           | KArrow Exp Exp
+          | Imply [Exp] Exp
           deriving (Show, Eq, Ord)
 
 data QType = DArrow [Exp] Exp deriving Show
@@ -46,6 +47,7 @@ data Decl = ProgDecl SourcePos VName Exp
           | ClassDecl SourcePos Class
           | EvalDecl Exp
           | OperatorDecl String Int String
+          | LemmaDecl SourcePos Exp
           deriving Show
 
 data Pattern = Var VName
