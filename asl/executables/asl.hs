@@ -5,9 +5,9 @@ import Lang.Syntax
 import Lang.PrettyPrint
 import Lang.Monad
 import Lang.Eval
-import Lang.Pattern
+--import Lang.Pattern
 import Lang.TypeInference
-import Lang.PMCompile
+--import Lang.PMCompile
 import Control.Monad.Except hiding (join)
 import Text.PrettyPrint
 import Text.Parsec(ParseError)
@@ -30,11 +30,12 @@ main = flip catches handlers $ do
              Left e -> throw e
              Right a -> do putStrLn $ "Parsing success! \n"
                            print $ disp a
-{-                           res <- runTypeChecker a
+                           res <- runTypeChecker a
                            ((_, subs),env) <- liftEither res
                            putStrLn $ "Type Checking success! \n"
-                           let env' = convert env -- converting the pattern into case-exp
-                           print $ disp env'
+--                           let env' = convert env -- converting the pattern into case-exp
+                           print $ disp env
+{-                           
 --                           print $ disp subs
 --                           putStrLn $ "Beginning Evaluation.  \n"
                            evalRes <- runEval env' $ toEval env'

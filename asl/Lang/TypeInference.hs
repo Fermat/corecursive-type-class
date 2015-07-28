@@ -241,6 +241,7 @@ makeVarNs s n | n >= 0 = map (\ y -> s ++ show y) [1..n]
 checkInst :: Inst -> TCMonad ()
 checkInst (Inst (qs, u) defs) = do
   let ft = makeType qs u
+      ft1 = Imply qs u
       u' = getPred u
       args = makeVarNs "a" $ length qs
       methNames = map fst defs
@@ -270,7 +271,6 @@ checkInst (Inst (qs, u) defs) = do
       precondition = check genForms forms && check forms genForms
       -- (Let [("dict", d)] $ PVar "dict" )
   if precondition then
-
     let genForms' = reorder genForms forms
         sub = firstSub datas genForms' forms
         genAssumps' = reconstruct genAssumps $ concat genForms'
@@ -286,15 +286,15 @@ checkInst (Inst (qs, u) defs) = do
  --       emit $ (hsep $ map disp genAssumps)
         name <- makeName "e"
         lift $ lift $ modify (\ e -> extendProgDef name ft' constr e) -- extend instance func
-        
-        let def  = makeDef qs (EVar name)
-            Just (kindInfo, False) = lookup u' $ dataType gEnv
-            kinds = flatten kindInfo            
-            args1 = getArgs u
+        lift $ lift $ modify (\ e -> extendAxiom name ft1 e) -- extend axioms
+        -- let def  = makeDef qs (EVar name)
+        --     Just (kindInfo, False) = lookup u' $ dataType gEnv
+        --     kinds = flatten kindInfo            
+        --     args1 = getArgs u
 --            info = zip args1 kinds 
-            pats = map (\ x -> toPat x gEnv) $ args1
-        lift $ lift $ modify (\ e -> extendEq u' (pats, def) e)  -- extend functional type class    
-        return ()
+--            pats = map (\ x -> toPat x gEnv) $ args1
+        --lift $ lift $ modify (\ e -> extendEq u' (pats, def) e)  -- extend functional type class    
+  --      return ()
     else tcError "Required predicates does not match specified predicates: "
         [(disp "Required:", hsep $ map disp $ concat genForms),(disp "Specified: ", hsep $ map disp $ concat forms)]
   where reconstruct env (f:fs) = let a = keyOf f env in (a,f) : reconstruct (delete (a,f) env) fs

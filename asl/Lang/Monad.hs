@@ -24,12 +24,13 @@ newtype Global a = Global { runGlobal :: (StateT Env (ExceptT TCError IO)) a}
 data Env = Env{ progDef :: M.Map VName (TScheme, Exp),  -- (type, def)
                 dataType :: [(VName, (Exp, Bool))], -- (name, kind, whether it is genuine data)
                 toEval :: [Exp], -- progs
-                equations :: [(VName, Equation)]
+                axioms :: [(VName, Exp)],
+                lemmas :: [(VName, (Exp, Exp))] -- (formula, proof)
               }
          deriving Show
 
 emptyEnv :: Env
-emptyEnv = Env {progDef = M.empty, dataType = [], toEval = [], equations = []}
+emptyEnv = Env {progDef = M.empty, dataType = [], toEval = [], axioms = [], lemmas = []}
                   
 extendProgDef :: VName -> TScheme -> Exp -> Env -> Env
 extendProgDef v ts t e@(Env {progDef}) = e{progDef = M.insert v (ts, t) progDef}
@@ -40,8 +41,8 @@ extendEval p e@(Env {toEval}) = e{toEval = p:toEval}
 extendData :: VName -> Exp -> Bool -> Env -> Env
 extendData v k b e@(Env {dataType}) = e{dataType =  (v, (k, b)):dataType}
 
-extendEq :: VName -> Equation -> Env -> Env
-extendEq v ts e@(Env {equations}) = e{equations =  (v , ts) : equations}
+extendAxiom :: VName -> Exp -> Env -> Env
+extendAxiom v ts e@(Env {axioms}) = e{axioms =  (v , ts) : axioms}
 
 -- extendAssump :: VName -> FType -> Env -> Env
 -- extendAssump v ts e@(Env {assump}) = e{assump = M.insert v ts assump}
@@ -57,8 +58,11 @@ instance Disp Env where
   disp env = hang (text "Program Definitions") 2 (vcat
                 [disp n <+> text "::" <+> disp ts $$ text "=" <+> disp t <+> text "\n" | (n, (ts, t)) <- M.toList $ progDef env])  $$ hang (text "Datas") 2 (vcat [ disp n <+> text "::" <+> disp k | (n, (k, _)) <- dataType env])
              $$
-             hang (text "Type Class Def") 2 (vcat [ disp n <+> disp k | (n, k) <- equations env])
+             hang (text "Axioms") 2 (vcat [ disp n <+> disp k | (n, k) <- axioms env])
+             -- $$
+             -- hang (text "Lemmas") 2 (vcat [ disp n <+> disp k | (n, k) <- lemmas env])
              $$
+
              hang (text "To be reduce") 2 (vcat
                                            [ int i <+> text ":" <+> disp p  | (i, p) <- zip [1..] (toEval env)])
 
