@@ -156,9 +156,11 @@ instance Disp Decl where
   disp (InstDecl p d) = disp d
   disp (EvalDecl p) = text "reduce" <+> disp p
   disp (LemmaDecl p exp) = text "lemma" <+> disp exp
--- instance Disp Constraints where
---   disp l = vcat $ map dispPair l
---     where dispPair (t1,t2) = disp t1 <+> text "=" <+> disp t2
+
+instance Disp (Maybe Exp) where
+  disp Nothing = text "undefined"
+  disp (Just x) = disp x
+
 
 instance Disp SourcePos where
   disp sp =  text (sourceName sp) <> colon <> int (sourceLine sp)

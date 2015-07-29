@@ -17,7 +17,7 @@ import Debug.Trace
 
 -- StateT Subst for HM unification, [(VName, TScheme)] for typing local context (introduced by lambdas and definitions)
 
-type TCMonad a = StateT Int (StateT Subst (ReaderT  [(VName, TScheme)] Global)) a  
+type TCMonad a = StateT Int (StateT Subst (ReaderT [(VName, TScheme)] Global)) a  
 
 
 --runTypeChecker :: Module -> IO (Either TCError Env)
@@ -40,6 +40,7 @@ checkModule (Module a (d:ds)) = do
 
 -- no implicit polymorphic recursion
 checkDecl :: Decl -> TCMonad ()
+{- todo
 checkDecl (EvalDecl p) = do
   (p', _, assump) <- checkProg p
   subs <- lift $ get
@@ -49,7 +50,7 @@ checkDecl (EvalDecl p) = do
       newP = foldr (\ x y -> Lambda x y) p' names
       term = foldl' (\ x y -> App x y) newP preds
   lift $ lift $ modify (\ e -> extendEval term e)
-  return ()
+-}
 
 checkDecl (ProgDecl pos x p) = do
   n <- makeName "X"
@@ -86,7 +87,12 @@ checkDecl (InstDecl pos inst) =
 
 checkDecl (ClassDecl pos c) =   
   checkClass c -- `catchError` addProgErrorPos pos c
+
+checkDecl (LemmaDecl pos c) = do
+  n <- makeName "lem"
+  lift $ lift $ modify (\ e -> extendLemma n Nothing c e)
   
+
 -- (term, type, predicates assumptions)
 checkProg ::  Exp -> TCMonad (Exp, Exp, [(VName, Exp)])
 checkProg (EVar y) = do

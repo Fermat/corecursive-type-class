@@ -40,11 +40,11 @@ instance Eq A, Eq (DList (DList A)) => Eq (DList A) where
                           con c cs -> false
                           ni -> true
 
--- lemma (forall B . Eq B => Eq (D B), forall X  . Eq X => Eq (F X)) => Eq (DList A)
--- lemma forall A . Eq A => Eq (DList A)
+
+lemma forall A . Eq A => Eq (DList A)
 
 test = eq (con z (con (con z (con (con z ni) ni)) ni))  (con z (con (con z ni) ni))
-reduce test
-reduce eq (con z (con (con z (con (con z ni) ni)) ni)) (con z (con (con z (con (con z ni) ni)) ni))
+-- reduce test
+-- reduce eq (con z (con (con z (con (con z ni) ni)) ni)) (con z (con (con z (con (con z ni) ni)) ni))
 
 -- (con z (con (con z (con (con z ni) ni)) ni))

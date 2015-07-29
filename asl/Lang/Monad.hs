@@ -20,12 +20,11 @@ import Text.Parsec.Pos
 newtype Global a = Global { runGlobal :: (StateT Env (ExceptT TCError IO)) a}
   deriving (Functor, Monad, Applicative, MonadState Env, MonadError TCError, MonadIO)
 
-
 data Env = Env{ progDef :: M.Map VName (TScheme, Exp),  -- (type, def)
                 dataType :: [(VName, (Exp, Bool))], -- (name, kind, whether it is genuine data)
                 toEval :: [Exp], -- progs
                 axioms :: [(VName, Exp)],
-                lemmas :: [(VName, (Exp, Exp))] -- (formula, proof)
+                lemmas :: [(VName, (Maybe Exp, Exp))] -- (formula, proof)
               }
          deriving Show
 
@@ -44,8 +43,8 @@ extendData v k b e@(Env {dataType}) = e{dataType =  (v, (k, b)):dataType}
 extendAxiom :: VName -> Exp -> Env -> Env
 extendAxiom v ts e@(Env {axioms}) = e{axioms =  (v , ts) : axioms}
 
--- extendAssump :: VName -> FType -> Env -> Env
--- extendAssump v ts e@(Env {assump}) = e{assump = M.insert v ts assump}
+extendLemma :: VName -> Maybe Exp -> Exp -> Env -> Env
+extendLemma v d t e@(Env {lemmas}) = e{lemmas = (v, (d, t)):lemmas}
 
 -- updateAssump :: (M.Map VName FType -> M.Map VName FType) -> Env -> Env
 -- updateAssump f e@(Env {assump}) = e{assump = f assump}
@@ -58,9 +57,9 @@ instance Disp Env where
   disp env = hang (text "Program Definitions") 2 (vcat
                 [disp n <+> text "::" <+> disp ts $$ text "=" <+> disp t <+> text "\n" | (n, (ts, t)) <- M.toList $ progDef env])  $$ hang (text "Datas") 2 (vcat [ disp n <+> text "::" <+> disp k | (n, (k, _)) <- dataType env])
              $$
-             hang (text "Axioms") 2 (vcat [ disp n <+> disp k | (n, k) <- axioms env])
-             -- $$
-             -- hang (text "Lemmas") 2 (vcat [ disp n <+> disp k | (n, k) <- lemmas env])
+             hang (text "Axioms") 2 (vcat [ disp n <+> text "::" <+> disp k | (n, k) <- axioms env])
+             $$
+             hang (text "Lemmas") 2 (vcat [ disp n <+> text "::" <+> disp k <+> text "=" <+> disp d | (n, (d, k)) <- lemmas env])
              $$
 
              hang (text "To be reduce") 2 (vcat
