@@ -121,6 +121,11 @@ applyE subs (FApp f1 f2) =
       a2 = applyE subs f2 in
   FApp a1 a2
 
+applyE subs (Imply bs h) =
+  let a1 = applyE subs h
+      a2 = map (applyE subs) bs in
+  Imply a2 a1
+
         
 -- applyE subs (Pos p f2) =
 --   Pos p (applyE subs f2)
