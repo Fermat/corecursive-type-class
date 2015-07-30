@@ -32,6 +32,7 @@ dParen level x =
    else disp x
 
 instance Disp Exp where
+  disp (Con x) = disp x
   disp (EVar x) = disp x
   disp (s@(App s1 s2)) =
     dParen (precedence s - 1) s1 <+>
@@ -84,6 +85,7 @@ instance Disp Exp where
 
   precedence (Pos _ t) = precedence t
   precedence (EVar _) = 12
+  precedence (Con _) = 12
   precedence (App _ _) = 10
   precedence _ = 0
 

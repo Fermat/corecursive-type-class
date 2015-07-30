@@ -13,7 +13,8 @@ import Text.Parsec.Pos
 type VName = String
 
 -- merge prog, kind, type into one syntactic category.
-data Exp = EVar VName             
+data Exp = EVar VName
+          | Con VName 
           | App Exp Exp 
           | Lambda VName Exp 
           | Match Exp [(VName, [VName], Exp)]

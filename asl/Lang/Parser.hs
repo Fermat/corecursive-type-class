@@ -84,36 +84,48 @@ gDecl :: Parser Decl
 gDecl =  try gDataDecl <|>  try instDecl
         <|> try classDecl <|> try progDecl <|> try reduceDecl <|> lemmaDecl
 
-setVar :: Parser String
-setVar = do
+
+var :: Parser Exp
+var = do
   n <- identifier
-  when (isLower (head n)) $
-    unexpected "Data names must begin with an uppercase letter."
+  when (isUpper (head n)) $ parserZero
+  return (EVar n)
+
+ensureLower :: Parser String
+ensureLower = do
+  n <- identifier
+  when (isUpper (head n)) $ unexpected " expected to begin with lowercase letter"
   return n
+
+ensureUpper :: Parser String
+ensureUpper = do
+  n <- identifier
+  when (isLower (head n)) $ unexpected " expected to begin with uppercase letter"
+  return n
+
+con :: Parser Exp
+con = do
+  n <- identifier
+  when (isLower (head n)) $ parserZero
+  return (Con n)
 
 -- datatype
 gDataDecl :: Parser Decl
 gDataDecl = do
   reserved "data"
-  n <- setVar
+  n <- ensureUpper
   pos <- getPosition
   ps <- params
   reserved "where"
   cs <- block cons
   return $ DataDecl pos (Data n ps cs) 
   where cons = do
-          c <- termVar
+          c <- ensureUpper
           reservedOp "::"
           t <- ftype
           return (c,t)
-        params = many setVar
+        params = many ensureLower
 
-termVar :: Parser String
-termVar = do
-  n <- identifier
-  when (isUpper (head n)) $
-    unexpected "Term names must begin with an lowercase letter."
-  return n
 
 -- parser for FType--
 ftype :: Parser Exp
@@ -127,21 +139,20 @@ ftypeOpTable = [[binOp AssocRight "->" Arrow]]
 
 forall = do
   reserved "forall"
-  vars <- many1 setVar
+  vars <- many1 ensureLower
   reservedOp "."
   f <- ftype
   return $ foldr (\ z x -> Forall z x) f vars
   
 compound = do
-  n <- setVar
+  n <- try var <|> con
   as <- compoundArgs
-  if null as then return $ EVar n
-    else return $ foldl' (\ z x -> FApp z x) (EVar n) as 
+  if null as then return n
+    else return $ foldl' (\ z x -> FApp z x) n as 
 
 compoundArgs = 
   many $ indented >>
-  ((try (setVar >>= \ n -> return $ EVar n))
-   <|> try (parens ftype))
+  (try con <|> try var <|> try (parens ftype))
 
 qtype :: Parser QType
 qtype = do
@@ -158,7 +169,7 @@ qtype = do
 
 progDecl :: Parser Decl
 progDecl = do
-  n <- termVar
+  n <- ensureLower
   pos <- getPosition
   reservedOp "="
   p <- prog
@@ -170,12 +181,9 @@ progA = wrapPos $ absProg <|> caseTerm <|> appProg <|> letbind <|> parens prog
 prog :: Parser Exp
 prog = getState >>= progParser 
 
-termVarProg :: Parser Exp
-termVarProg = termVar >>= \n-> return $ EVar n
-
 appProg = do
-  sp <- try termVarProg <|> try (parens prog) 
-  as <- many $ indented >> (try (parens prog) <|> try termVarProg)
+  sp <- try var <|> try con <|> try (parens prog) 
+  as <- many $ indented >> (try (parens prog) <|> try var <|> try con)
   if null as then return sp
     else return $ foldl' (\ z x -> App z x) sp as
 
@@ -186,7 +194,7 @@ letbind = do
   p <- prog
   return $ Let bs p
   where branch = do 
-          v <- termVar
+          v <- ensureLower
           reservedOp "="
           p <- prog
           return $ (v, p)
@@ -199,15 +207,15 @@ caseTerm = do
   return $ Match n bs
   where
     branch = do
-      v <- termVar 
-      l <- many $ termVar
+      v <- ensureUpper 
+      l <- many $ ensureLower
       reservedOp "->"
       pr <- prog
       return $ (v, l, pr)
 
 absProg = do
   reservedOp "\\"
-  as <- many1 termVar
+  as <- many1 ensureLower
   reservedOp "."
   p <- prog
   return $ foldr (\ x y -> Lambda x y) p as
@@ -224,27 +232,26 @@ reduceDecl = do
 classDecl :: Parser Decl
 classDecl = do
   reserved "class"
-  n <- setVar
+  n <- ensureUpper
   pos <- getPosition
   ps <- params
   reserved "where"
   cs <- block medths
   return $ ClassDecl pos (Class n ps cs) 
   where medths = do
-          c <- termVar
+          c <- ensureLower
           reservedOp "::"
           t <- qtype
           return (c,t)
-        params = many1 setVar
+        params = many1 ensureLower
 
 -- inst decl
 
 pred :: Parser Exp
 pred = do
-  n <- setVar
-  ps <- many1 (try single <|> parens ftype)
-  return $  foldl' (\ z x -> FApp z x) (EVar n) ps 
- where single = do{x <- setVar; return $ EVar x }
+  n <- con
+  ps <- many1 $ indented >> (try var <|> try con <|> parens ftype)
+  return $  foldl' (\ z x -> FApp z x) n ps 
 
 multi :: Parser [Exp]
 multi = do
@@ -262,19 +269,19 @@ instDecl = do
   cs <- block meds
   return $ InstDecl pos (Inst (ps,u) cs) 
   where meds = do
-          c <- termVar
+          c <- ensureLower
           reservedOp "="
           t <- prog
           return (c,t)
 
 prefix = do
   reserved "forall"
-  vars <- many1 setVar
+  vars <- many1 ensureLower 
   reservedOp "."
   return vars
 
 singleG = 
-  try manyG <|> try lin <|> try single
+  try manyG <|> try lin <|> single
   where
     single = do
       vs <- option [] prefix
