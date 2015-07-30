@@ -1,6 +1,7 @@
 module Lang.TypeInference where
 import Lang.Syntax
 import Lang.PrettyPrint
+import Lang.Functionalisation
 import Lang.Monad
 import Lang.KindInference
 -- import Lang.Pattern(arity)
@@ -72,6 +73,7 @@ checkDecl (ClassDecl pos c) =
 
 checkDecl (LemmaDecl pos c) = do
   n <- makeName "lem"
+  
   lift $ lift $ modify (\ e -> extendLemma n (EVar "undefined") c e)
   
 -- (term, type, predicates assumptions)
