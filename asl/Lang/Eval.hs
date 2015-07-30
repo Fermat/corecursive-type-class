@@ -54,7 +54,7 @@ reduce (FApp t1 t2) = do
 reduce (Lambda x t) = do
 --  emit $ (text "reducing" <+> disp (Lambda x t))
   return $ Lambda x t
-
+reduce a@(Con x) = return a
 reduce (EVar x) = do
 --    emit $ (text "reducing" <+> disp x)
     e <- get
@@ -63,12 +63,14 @@ reduce (EVar x) = do
       Just p -> reduce p
       Nothing -> 
         case M.lookup x (progDef e) of
-          Just (_, t) -> if t == EVar x then return $ EVar x
-                         else reduce t
-          Nothing -> case lookup x (dataType e) of
-                            Just _ -> return $ EVar x
-                            Nothing -> tcError "stucking situation"
-                                        [(disp "undefined variable: ", disp x), (disp "local env: ", disp $ show loc)]
+          Just (_, t) -> --if t == EVar x then return $ EVar x
+                         reduce t
+          Nothing -> tcError "stucking situation"
+                     [(disp "undefined variable: ", disp x), (disp "local env: ", disp $ show loc)]
+            -- case lookup x (dataType e) of
+                     --        Just _ -> return $ EVar x
+                     --        Nothing -> tcError "stucking situation"
+                     --                    [(disp "undefined variable: ", disp x), (disp "local env: ", disp $ show loc)]
 
 reduce u@(Let defs t) = do
 --  emit $ (text "reducing" <+> disp u)

@@ -1,64 +1,64 @@
 module tom where
-data Comp F G A where
-   comp :: (F (G A)) -> Comp F G A
+data Comp f g a where
+   Comp :: (f (g a)) -> Comp f g a
 
 data Unit where
-  unit :: Unit
+  Unit :: Unit
 
-data Pair A where
- pair :: A -> A -> Pair A
+data Pair a where
+ Pair :: a -> a -> Pair a
 
-data GSeqF A R where
-   nil :: GSeqF A R
-   cons :: A -> R -> GSeqF A R
+data GSeqF a r where
+   Nil :: GSeqF a r
+   Cons :: a -> r -> GSeqF a r
 
-data Fix F G where
- fix ::  (F (Fix (Comp G F) G)) -> Fix F G
+data Fix f g where
+ Fix ::  (f (Fix (Comp g f) g)) -> Fix f g
 
 data Bool where
-     true :: Bool
-     false :: Bool
+     True :: Bool
+     False :: Bool
 
-class Eq A where
-   eq :: Eq A => A -> A -> Bool
+class Eq a where
+   eq :: Eq a => a -> a -> Bool
 
 and = \ x y . case x of
-                true -> y
-		false -> false
+                True -> y
+		False -> False
 
 instance  => Eq Unit where
    eq = \ x y . case x of
-                  unit -> case y of 
-                             unit -> true
+                  Unit -> case y of 
+                             Unit -> True
 
 
-instance Eq (F (G A)) => Eq (Comp F G A) where
+instance Eq (f (g a)) => Eq (Comp f g a) where
    eq = \ x y . case x of
-                   comp s -> case y of 
-                                comp t  ->  eq s t
+                   Comp s -> case y of 
+                                Comp t  ->  eq s t
 
-instance Eq A, Eq A => Eq (Pair A) where
+instance Eq a, Eq a => Eq (Pair a) where
   eq = \ x y . case x of
-                 pair x1 y1 -> case y of
-                                pair x2 y2 -> and (eq x1 x2) (eq y1 y2)
+                 Pair x1 y1 -> case y of
+                                Pair x2 y2 -> and (eq x1 x2) (eq y1 y2)
 
-instance Eq A, Eq R => Eq (GSeqF A R) where
+instance Eq a, Eq r => Eq (GSeqF a r) where
     eq = \ x y . case x of
-                    nil -> case y of
-                             nil -> true
-                             cons z zs -> false
-                    cons q qs -> case y of
-                                   nil  -> false
-    				   cons z zs -> and (eq q z) (eq qs zs)
+                    Nil -> case y of
+                             Nil -> True
+                             Cons z zs -> False
+                    Cons q qs -> case y of
+                                   Nil  -> False
+    				   Cons z zs -> and (eq q z) (eq qs zs)
 
-instance Eq (F (Fix (Comp G F) G)) => Eq (Fix F G) where
+instance Eq (f (Fix (Comp g f) g)) => Eq (Fix f g) where
    eq = \ x y . case x of
-                  fix s -> case y of
- 		      	    fix t -> eq s t
+                  Fix s -> case y of
+ 		      	    Fix t -> eq s t
 
-test = eq (fix (cons unit (fix (comp (pair nil nil))))) (fix nil)
-reduce eq (fix (cons unit (fix (comp (pair nil nil))))) (fix (cons unit (fix (comp (pair nil nil)))))
+test = eq (Fix (Cons Unit (Fix (Comp (Pair Nil Nil))))) (Fix Nil)
+-- reduce eq (Fix (Cons Unit (Fix (Comp (Pair Nil Nil))))) (Fix (Cons Unit (Fix (Comp (Pair nil nil)))))
 --  (fix nil)
-reduce test
+-- reduce test
 -- (fix nil)
 

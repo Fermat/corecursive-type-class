@@ -9,38 +9,31 @@ import Control.Parallel
 
 import qualified Data.Set as S
 
---import The match function here is
+-- import The match function here is
 -- doing precise matching, meaning, variable can only
 -- be matched to variable, not other stuff.
-match :: MonadPlus m => [VName] -> [(VName, VName)] -> Exp -> Exp -> m [(VName, VName)]
-match datas env (EVar x) (EVar y) |  x `elem` datas || y `elem` datas =
+match :: MonadPlus m => [(VName, VName)] -> Exp -> Exp -> m [(VName, VName)]
+match env (Con x) (Con y) =
   if x == y then return env
   else mzero
 
-match datas env (EVar x) (EVar y) = 
+match env (EVar x) (EVar y) = 
   case lookup x env of
     Just z -> if z == y then return env
               else mzero
     mzero -> if x == y then return env else return $ (x, y):env
 
-match datas env (Arrow f1 f2) (Arrow a1 a2) = do
-  r1 <- match datas env f1 a1
-  r2 <- match datas r1 f2 a2
+match env (Arrow f1 f2) (Arrow a1 a2) = do
+  r1 <- match env f1 a1
+  r2 <- match r1 f2 a2
   return r2
 
-match datas env (FApp f1 f2) (FApp a1 a2) = do
-  r1 <- match datas env f1 a1
-  r2 <- match datas r1 f2 a2
+match env (FApp f1 f2) (FApp a1 a2) = do
+  r1 <- match env f1 a1
+  r2 <- match r1 f2 a2
   return r2
 
--- match datas env (FCons x xs) (FCons y ys) | x == y = do
---   let args = zip xs ys
---   new <- foldM helper env args
---   return new
---   where helper e (f1, f2) = do
---           r <- match datas e f1 f2
---           return r
-match _ _ _ _ = mzero
+match _ _ _ = mzero
 
 -- cmp :: [VName] -> FType -> [FType] -> [(FType, [(VName, VName)])]
 -- cmp datas p l =
@@ -61,7 +54,7 @@ perm (x:xs) =  [ b | l <- perm xs, b <- insert x l]
 -- getPred ((FCons x args):xs) = S.insert x $ getPred xs
 
 getPred :: Exp -> VName
-getPred (EVar x) =  x
+getPred (Con x) =  x
 getPred (FApp x1 x2) = getPred x1
 getPred _ = error "not a predicate"
 
@@ -122,20 +115,20 @@ reverseCombine l = do
   let sub = map (\ x -> [x]) $ inverse l
   foldM combine [] sub
 
-alphaEq :: MonadPlus m => [VName] -> Exp -> Exp -> m [(VName, VName)]
-alphaEq datas f1 f2 = do
-  s <- match datas [] f1 f2
+alphaEq :: MonadPlus m => Exp -> Exp -> m [(VName, VName)]
+alphaEq f1 f2 = do
+  s <- match [] f1 f2
   reverseCombine s
       
-listAlpha :: MonadPlus m => [VName] -> [Exp] -> [Exp] -> m [(VName, VName)]
-listAlpha datas fs ts = do
-  ls <- zipWithM (alphaEq datas) fs ts
+listAlpha :: MonadPlus m => [Exp] -> [Exp] -> m [(VName, VName)]
+listAlpha fs ts = do
+  ls <- zipWithM alphaEq fs ts
   s <- foldM combine [] ls
   reverseCombine s
 
-alphaFormulas :: MonadPlus m => [VName] -> [[Exp]] -> [[Exp]] -> m [(VName, VName)]
-alphaFormulas datas fss tss = do
-  lss <- zipWithM (listAlpha datas) fss tss
+alphaFormulas :: MonadPlus m => [[Exp]] -> [[Exp]] -> m [(VName, VName)]
+alphaFormulas fss tss = do
+  lss <- zipWithM (listAlpha) fss tss
   s <- foldM combine [] lss
   reverseCombine s
 
@@ -143,12 +136,12 @@ alphaFormulas datas fss tss = do
 genFormulas (fs:fss) = [ a' | f <- fs, let a = map (\ y -> f:y) $ genFormulas fss, a' <- a ]
 genFormulas [] = [[]]  
 
-formulasEq :: [VName] -> [[Exp]] -> [[Exp]] -> [[(VName, VName)]]
-formulasEq datas fss tss =
+formulasEq :: [[Exp]] -> [[Exp]] -> [[(VName, VName)]]
+formulasEq fss tss =
    let n = map perm tss
        all = genFormulas n in
    map helper all
-  where helper y = case alphaFormulas datas y fss of
+  where helper y = case alphaFormulas y fss of
                        Nothing -> [("Fail", "Fail")]
                        Just o -> o
 
@@ -157,8 +150,8 @@ firstNon (a:as) = if a == [("Fail", "Fail")] then firstNon as else Just a
 
 -- firstSub datas fss tss, it assumes all the variables in fss is separated from
 -- all the variables in tss.
-firstSub :: [VName] -> [[Exp]] -> [[Exp]] -> Maybe [(VName, VName)]
-firstSub datas fss tss = firstNon $ formulasEq datas fss tss 
+firstSub :: [[Exp]] -> [[Exp]] -> Maybe [(VName, VName)]
+firstSub  fss tss = firstNon $ formulasEq fss tss 
 
 
 -- testing

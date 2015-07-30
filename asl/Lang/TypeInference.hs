@@ -267,7 +267,7 @@ checkInst (Inst (qs, u) defs) = do
       -- (Let [("dict", d)] $ PVar "dict" )
   if precondition then
     let genForms' = reorder genForms forms
-        sub = firstSub datas genForms' forms
+        sub = firstSub genForms' forms
         genAssumps' = reconstruct genAssumps $ concat genForms'
         phi = map (\(x,y) -> (x, EVar y )) $ zip (map fst genAssumps') (map fst impArgs)
         newTerms = map (applyE phi) terms
@@ -307,13 +307,13 @@ checkInst (Inst (qs, u) defs) = do
           t' <- toTScheme t
           t'' <- freshInst t'
           let resTypes = foldr (\ z x -> Arrow z x) (getFType t'') tys 
-          case M.lookup ("c"++(getPred t)) progs of
+          case M.lookup ("C"++(getPred t)) progs of
             Nothing -> tcError "Internal Error: " [(disp "from ensureInst", disp "in type checking instance decl")]
             Just (t, _) -> do
               t' <- freshInst t
               unification (getFType t') resTypes
 
-
+{-
 toPat p state = 
   let ps = toSpine p
       f = map (helper state) ps  in
@@ -333,7 +333,7 @@ toPat p state =
               else (Var a)
           helper st c@(FApp a b)  = toPat c st
           helper st (Pos _ p) = helper st p 
-
+-}
 toSpine (EVar a) = [EVar a]
 toSpine (FApp a b) = toSpine a ++ [b]
 toSpine (Pos _ p) = toSpine p
@@ -390,16 +390,16 @@ subGen sub assump as = do
 toTScheme :: Exp -> TCMonad TScheme
 toTScheme ft = do
   env <- lift $ lift get
-  let def = map fst $ dataType env 
-  return $ Scheme (nub [ x | x <- S.toList $ freeVar ft, not (elem x def)]) $ DArrow [] ft
+--  let def = map fst $ dataType env 
+  return $ Scheme (nub [ x | x <- S.toList $ freeVar ft]) $ DArrow [] ft
 
 qToTScheme :: QType -> TCMonad TScheme
 qToTScheme (DArrow qs ft) = do
   env <- lift $ lift get
-  let def = map fst $ dataType env
-      qvars = S.unions $ map freeVar qs
+  let
+    qvars = S.unions $ map freeVar qs
 --  emit $ show def
-  return $ Scheme (nub [ x | x <- S.toList $ S.union qvars  (freeVar ft), not (elem x def)]) $ DArrow qs ft
+  return $ Scheme (nub [ x | x <- S.toList $ S.union qvars (freeVar ft)]) $ DArrow qs ft
 
 qToFType :: QType -> Exp
 qToFType (DArrow xs f) = foldl' (\ z x -> Arrow z x) f xs
