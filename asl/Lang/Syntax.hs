@@ -160,6 +160,9 @@ apply a x (Let branches p) =
   let binds = map fst branches in
   if x `elem` binds then (Let branches p)
   else Let (map (\ (e,d) -> (e, apply a x d)) branches) (apply a x p)
+apply a x t1@(Forall y t) =
+  if x == y then t1
+  else Forall y (apply a x t)
 
 apply a x (FApp p1 p2) = FApp (apply a x p1) (apply a x p2)
 apply a x (Imply bds h) = Imply (map (apply a x) bds) (apply a x h)

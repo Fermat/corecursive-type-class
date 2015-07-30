@@ -179,6 +179,7 @@ t3 = Imply [(FApp (Con "Eq") (EVar "y"))] (FApp (Con "Eq") (FApp (Con "Pair") (E
 t4 = Imply [(FApp (Con "Eq") (EVar "A")), (FApp (Con "Eq") (EVar "R"))]
      (FApp (Con "Eq") (FApp (FApp (Con "GS") (EVar "A")) (EVar "R")))
 t5' = runPositive t5
+t5'' = runNegative (Imply [(Imply [Forall "F" t5] (Con "what"))] (Con "what") )
 t5 = Imply [Forall "X" $ Imply [(FApp (Con "Eq") (EVar "X"))] (FApp (Con "Eq") (FApp (EVar "F") (EVar "X")))]
      (FApp (Con "Eq") (FApp (FApp (Con "Fix") (EVar "F")) (Con "Pair")))
 t6 = Imply [Con "B"] (FApp (Con "Eq") (FApp (FApp (Con "Fix") (FApp (Con "GS") (Con "Unit"))) (Con "Pair")))     
