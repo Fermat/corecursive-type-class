@@ -62,7 +62,8 @@ freeVar (EVar x) = S.insert x S.empty
 freeVar (Con x) = S.empty
 freeVar (Arrow f1 f2) = (freeVar f1) `S.union` (freeVar f2)
 freeVar (FApp f1 f2) = (freeVar f1) `S.union` (freeVar f2)
-freeVar (Forall x f) = S.delete x (freeVar f) 
+freeVar (Forall x f) = S.delete x (freeVar f)
+freeVar (Imply bds h) = S.unions (map freeVar bds) `S.union` freeVar h
 
 freeKVar :: Exp -> S.Set VName
 freeKVar Star = S.empty
@@ -161,6 +162,7 @@ apply a x (Let branches p) =
   else Let (map (\ (e,d) -> (e, apply a x d)) branches) (apply a x p)
 
 apply a x (FApp p1 p2) = FApp (apply a x p1) (apply a x p2)
+apply a x (Imply bds h) = Imply (map (apply a x) bds) (apply a x h)
 apply a x (Pos _ p) = apply a x p       
 
 applyK :: [(VName, Exp)] -> Exp -> Exp
@@ -186,8 +188,15 @@ makeName name = do
   modify (+1)
   return $ name ++ show m
 
+inst (Forall x t) = do
+   newVar <- makeName "x"
+   t' <- inst t
+   return $ apply (EVar newVar) x t'
+inst a = return a   
+
 flatten :: Exp -> [Exp]
 flatten (Pos _ f) = flatten f
 flatten (Arrow f1 f2) = f1 : flatten f2
 flatten (KArrow f1 f2) = f1 : flatten f2
 flatten _ = []
+

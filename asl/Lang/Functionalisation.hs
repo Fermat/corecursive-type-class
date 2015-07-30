@@ -3,30 +3,30 @@ import Lang.Syntax
 import Lang.PrettyPrint
 
 import Data.List
+import qualified Data.Set as S
 import Control.Monad.Reader
 import Control.Monad.State
 
 type Axioms = [(VName, Exp)]
 
-runRewrite d axioms fs = runReader (evalStateT (evalStateT (rewrite d) 0) fs) axioms
+runRewrite d axioms = runReader (evalStateT (rewrite d) 0) axioms
 
-rewrite :: Exp -> StateT Int (StateT [VName] (Reader Axioms)) (Maybe Exp)
+rewrite :: Exp -> StateT Int (Reader Axioms) (Maybe Exp)
 rewrite (Imply [] h) = do
   axioms <- ask
-  funcs <- lift get
-  case firstMatch funcs h axioms of
+  case firstMatch h axioms of
     Nothing -> return Nothing
     Just (k, ls) -> do res <- mapM rewrite ls
                        if success res then do
                          let res' = map (\ (Just x) -> x) res
                          return $ Just $ foldl' (\ z x -> App z x) (EVar k) res' 
                          else return Nothing
- where firstMatch funcs x [] = Nothing
-       firstMatch funcs x ((k, Imply bds h'):ys) = 
-         case match funcs h' x of
-           Nothing -> firstMatch funcs x ys
+ where firstMatch  x [] = Nothing
+       firstMatch  x ((k, Imply bds h'):ys) = 
+         case match h' x of
+           Nothing -> firstMatch  x ys
            Just s -> Just $ (k, map (applyE s) bds)
-       firstMatch funcs x ((k, h'):ys) = firstMatch funcs x ((k, Imply [] h'):ys)
+       firstMatch  x ((k, h'):ys) = firstMatch x ((k, Imply [] h'):ys)
        success [] = True
        success (Nothing:rs) = False
        success (Just _ :rs) = success rs
@@ -49,19 +49,49 @@ merge s1 s2 = if agree then return $ s1 ++ s2 else mzero
 
 -- match :: MonadPlus m => Exp -> Exp -> m Subst
 
-match fs (EVar s) t1 =
-  if s `elem` fs then
-    if (EVar s) == t1 then return [] else mzero
-  else return [(s, t1)]
-       
-
-match fs (FApp t1 t2) (FApp t1' t2') = do
-  s1 <- match fs t1 t1'
-  s2 <- match fs t2 t2'
+match (EVar s) t1 = return [(s, t1)]
+match (FApp t1 t2) (FApp t1' t2') = do
+  s1 <- match t1 t1'
+  s2 <- match t2 t2'
   merge s1 s2
+match (Con s) (Con t) | s == t = return []
+match _ _ = mzero
 
-match _ _ _ = mzero
 
+myPi a f = do
+  f' <- inst f
+  let as = freeVar a
+      fs = freeVar f'
+      dom = S.toList (S.difference fs as)
+  names <- mapM (\ y -> makeName "d") dom
+  let cons = map Con names
+      sub = zip dom cons
+  return $ applyE sub f'
+
+myVarPi a f = do
+  f' <- inst f
+  let dom = S.toList $ freeVar a
+  names <- mapM (\ y -> makeName "d") dom
+  let cons = map Con names
+      sub = zip dom cons
+  return $ applyE sub f'
+
+positive :: Exp -> State Int Exp
+positive (Imply bds h) = do
+  bds' <- mapM (myPi h) bds
+  res <- mapM negative bds'
+  return $ Imply res h
+positive h = return h
+
+negative :: Exp -> State Int Exp
+negative (Imply bds h) = do
+  bds' <- mapM (myVarPi h) bds
+  res <- mapM positive bds'
+  return $ Imply res h
+negative a = return a
+
+runPositive exp  = evalState (positive exp) 0
+runNegative exp  = evalState (negative exp) 0
 t1' = FApp (EVar "Eq") (FApp (EVar "y") (EVar "y"))
 t2' = FApp (EVar "Eq") (FApp (EVar "char") (EVar "char"))
 
@@ -70,23 +100,23 @@ c1 = Imply [(FApp (EVar "Eq") (EVar "y"))] (FApp (EVar "Eq") (FApp (EVar "DList"
 c2 = Imply [] (FApp (EVar "Eq") (EVar "Char"))
 axiom1 = [("k1", c1), ("k2", c2)]
 
-t1 = Imply [] (FApp (EVar "Eq") (EVar "Unit"))
-t2 = Imply [(FApp (EVar "Eq") (FApp (EVar "F") (FApp (EVar "G") (EVar "A"))))]
-     (FApp (EVar "Eq") (FApp (FApp (FApp (EVar "Comp") (EVar "F")) (EVar "G")) (EVar "A")))
+t1 = Imply [] (FApp (Con "Eq") (Con "Unit"))
+t2 = Imply [(FApp (Con "Eq") (FApp (EVar "F") (FApp (EVar "G") (EVar "A"))))]
+     (FApp (Con "Eq") (FApp (FApp (FApp (Con "Comp") (EVar "F")) (EVar "G")) (EVar "A")))
      
-t3 = Imply [(FApp (EVar "Eq") (EVar "y"))] (FApp (EVar "Eq") (FApp (EVar "Pair") (EVar "y")))
+t3 = Imply [(FApp (Con "Eq") (EVar "y"))] (FApp (Con "Eq") (FApp (Con "Pair") (EVar "y")))
 
-t4 = Imply [(FApp (EVar "Eq") (EVar "A")), (FApp (EVar "Eq") (EVar "R"))]
-     (FApp (EVar "Eq") (FApp (FApp (EVar "GS") (EVar "A")) (EVar "R")))
+t4 = Imply [(FApp (Con "Eq") (EVar "A")), (FApp (Con "Eq") (EVar "R"))]
+     (FApp (Con "Eq") (FApp (FApp (Con "GS") (EVar "A")) (EVar "R")))
+t5' = runPositive t5
+t5 = Imply [Forall "X" $ Imply [(FApp (Con "Eq") (EVar "X"))] (FApp (Con "Eq") (FApp (EVar "F") (EVar "X")))]
+     (FApp (Con "Eq") (FApp (FApp (Con "Fix") (EVar "F")) (Con "Pair")))
+t6 = (FApp (Con "Eq") (FApp (FApp (Con "Fix") (FApp (Con "GS") (Con "Unit"))) (Con "Pair")))     
 
-t5 = Imply [Imply [(FApp (EVar "Eq") (EVar "X"))] (FApp (EVar "Eq") (FApp (EVar "F") (EVar "X")))]
-     (FApp (EVar "Eq") (FApp (FApp (EVar "Fix") (EVar "F")) (EVar "Pair")))
-t6 = (FApp (EVar "Eq") (FApp (FApp (EVar "Fix") (FApp (EVar "GS") (EVar "Unit"))) (EVar "Pair")))     
-
-axioms2 = [("k1", t1), ("k2", t2), ("k3", t3), ("k4", t4), ("k5", t5)]
-fs = ["Eq", "Comp", "Fix", "GS", "Pair", "Unit", "Char", "DList", "X"]  
+axioms2 = [("k1", t1), ("k2", t2), ("k3", t3), ("k4", t4), ("k5", t5')]
 testMatch :: [Subst]
-testMatch = match fs t1' t2' 
+testMatch = match t1' t2' 
 
 -- testRewrite = runReader (evalStateT (rewrite dl) 0) axiom1
-test2 = runRewrite t6 axioms2 fs
+test2 = runRewrite t6 axioms2 
+-- test3 = disp $ 
