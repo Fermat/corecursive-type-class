@@ -18,7 +18,7 @@ type KCMonad a = StateT Int (StateT KSubst Global) a
 type KSubst = [(VName, Exp)]
 type LocalEnv = [(VName, Exp)]
 
--- runKinding :: [FType] -> Global KSubst
+runKinding :: [Exp] -> Global KSubst
 runKinding ls = execStateT (evalStateT (mapM inferKind ls) 0) []
 
 ground :: Exp -> Exp
@@ -27,19 +27,22 @@ ground (KArrow k1 k2) = KArrow (ground k1) (ground k2)
 ground Star = Star
 
 inferKind :: Exp -> KCMonad Exp
-inferKind (EVar x) = do
-  gEnv <- lift $ lift get 
-  env <- lift get
-  case lookup x (dataType gEnv) of
+inferKind (Con x) = do
+  gEnv <- lift $ lift get
+  case M.lookup x (dataType gEnv) of
     Just (k, _) -> return k
-    Nothing -> 
-      case lookup x env of
-        Nothing -> do
-          ki <- makeName "k"
-          let kind = KVar ki
-          lift $ modify (\ e -> (x, kind): e)
-          return kind
-        Just k -> return k  
+    Nothing -> tcError "Kinding error "
+           [(disp "undefine type constructor", disp x)]
+  
+inferKind (EVar x) = do
+  env <- lift get
+  case lookup x env of
+    Nothing -> do
+      ki <- makeName "k"
+      let kind = KVar ki
+      lift $ modify (\ e -> (x, kind): e)
+      return kind
+    Just k -> return k  
   
 inferKind (FApp f1 f2) = do
   k1 <- inferKind f1

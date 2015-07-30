@@ -3,7 +3,7 @@ import Lang.Syntax
 import Lang.PrettyPrint
 import Lang.Monad
 import Lang.KindInference
-import Lang.Pattern(arity)
+-- import Lang.Pattern(arity)
 import Lang.Formulas hiding(combine)
 import Text.Parsec.Pos
 import Text.PrettyPrint hiding(sep)
@@ -19,20 +19,13 @@ import Debug.Trace
 
 type TCMonad a = StateT Int (StateT Subst (ReaderT [(VName, TScheme)] Global)) a  
 
-
---runTypeChecker :: Module -> IO (Either TCError Env)
+runTypeChecker :: Module -> IO (Either TCError (((), Subst), Env))
 runTypeChecker m = 
   runExceptT $ runStateT
   (runGlobal (runReaderT (runStateT (evalStateT (checkModule m) 0) []) [])) emptyEnv
 
-
-  -- runExceptT $ execStateT
-  -- (runGlobal (runReaderT (evalStateT (evalStateT (checkModule m) 0) []) [])) emptyEnv
-  
 checkModule :: Module -> TCMonad ()
 checkModule (Module _ []) = return ()
-  -- sub <- lift $ get
-  -- lift $ lift $ modify (\ e -> updateAssump (M.map $ applyF sub) e)
 
 checkModule (Module a (d:ds)) = do
   checkDecl d
@@ -53,23 +46,12 @@ checkDecl (EvalDecl p) = do
 -}
 
 checkDecl (ProgDecl pos x p) = do
-  n <- makeName "X"
+  n <- makeName "x"
   let ts = Scheme [] $ DArrow [] (EVar n)
   (p', f, assump) <- local (\ y -> (x, ts):y) $ checkProg p
-  -- subs <- lift $ get
   -- emit subs
-  -- emit "\n"
-  -- emit assump
-  -- emit "\n"
-  -- emit f
-  -- let f' = applyE subs' f
-  --     f1 = case lookup n subs' of
-  --               Just s -> s
-  --               Nothing -> EVar n
   unification f (EVar n) `catchError` addErrorPos pos x
   subs' <- lift $ get
-  -- emit subs'
-  -- subs <- lift $ get
   let
       f'' = applyE subs' f
       assump' = map (\(a , b) -> (a, applyE subs' b)) assump
@@ -90,11 +72,19 @@ checkDecl (ClassDecl pos c) =
 
 checkDecl (LemmaDecl pos c) = do
   n <- makeName "lem"
-  lift $ lift $ modify (\ e -> extendLemma n Nothing c e)
+  lift $ lift $ modify (\ e -> extendLemma n (EVar "undefined") c e)
   
-
 -- (term, type, predicates assumptions)
 checkProg ::  Exp -> TCMonad (Exp, Exp, [(VName, Exp)])
+checkProg (Con y) = do
+  env <- lift $ lift get
+  case M.lookup y $ progDef env of
+    Just (t, e) -> do
+      DArrow [] t' <- freshInst t
+      return (e, t', [])
+    Nothing -> tcError "typing error: "
+               [(disp "undefine constructor ", disp y)]
+      
 checkProg (EVar y) = do
   tcAssump <- ask
   case lookup y tcAssump of
@@ -122,19 +112,18 @@ checkProg (EVar y) = do
 checkProg (App t1 t2) = do
   (t1', f1, a1) <- checkProg t1 
   (t2', f2, a2) <- checkProg t2 
-  m <- makeName "X"
+  m <- makeName "x"
   unification f1 $ Arrow f2 (EVar m)
   return (App t1' t2', EVar m, a1++a2)
 
 checkProg (Lambda x t) = do
-  n <- makeName "X"
+  n <- makeName "x"
   let sc = Scheme [] $ DArrow [] (EVar n) 
       ty = EVar n
       new = (x, sc)
   (t', ty', newA) <- local (\y -> new:y) $ checkProg t 
   let ty'' = Arrow ty ty'
   return (Lambda x t', ty'', newA)
-
 
 checkProg (Let xs p) = do
   ns <- mapM (\ x -> makeName "X") xs
@@ -186,7 +175,7 @@ checkBranch datatype (c, args, t) = do
            [(disp "Constructor name: ", disp c)]
     Just (Scheme vars (DArrow [] ty), _) -> do
       arityCheck c ty (length args)
-      newNames <- mapM (\ x -> makeName "X") vars
+      newNames <- mapM (\ x -> makeName "x") vars
       let newVars = map EVar newNames
           subs = zip vars newVars
           newTy = applyE subs ty
@@ -199,17 +188,17 @@ checkBranch datatype (c, args, t) = do
 
 checkData :: Datatype -> TCMonad ()
 checkData (Data d params cons) = do
---  lift $ lift $ modify (\ e -> extendData d e)
-  let d1 = if null params then EVar d else makeFType d params
+  kname <- makeName "g"
+  lift $ lift $ modify (\ e -> extendData d (KVar kname) True e)
+  let d1 = if null params then Con d else makeFType d params
   subst <- lift $ lift $ lift $ runKinding $ getTypes cons
-  case lookup d subst of
-    Nothing -> tcError "Unknown error for Kinding: " []
-    Just k -> lift $ lift $ modify (\ e -> extendData d (ground k) True e)
+  let d2 = applyK subst (KVar kname)
+  lift $ lift $ modify (\ e -> extendData d (ground d2) True e)
   mapM_ (checkCons d1) cons
   mapM_ extendCons cons
   return ()
   where getTypes cs = map (\(x,y) -> y) cs
-        makeFType d params = foldl' (\ z x -> FApp z x) (EVar d) (map EVar params) -- $ map EVar (d:params)
+        makeFType d params = foldl' (\ z x -> FApp z x) (Con d) (map EVar params) 
         checkCons d (c, f) = do
           let d' = getDataType f
           if d == d' then return ()
@@ -217,26 +206,26 @@ checkData (Data d params cons) = do
            [(disp "can't match ", quotes (disp d) <+> disp "with"<+> quotes (disp d'))]
         extendCons (c, f) = do
           s <- toTScheme f
-          lift $ lift $ modify (\ e -> extendProgDef c s (EVar c) e)
+          lift $ lift $ modify (\ e -> extendProgDef c s (Con c) e)
 
 checkClass :: Class -> TCMonad ()
 checkClass (Class u params meths) = do
+  kname <- makeName "g"
+  lift $ lift $ modify (\ e -> extendData u (KVar kname) False e)
   let fts = map (\ (x, q) -> getFType q) meths
-      d = makeType fts $ foldl' (\ z x -> FApp z x) (EVar u) (map EVar params)
+      d = makeType fts $ foldl' (\ z x -> FApp z x) (Con u) (map EVar params)
       toKC = map qToFType (map snd meths)
   subst <- lift $ lift $ lift $ runKinding $ toKC
-  case lookup u subst of
-    Nothing -> tcError "Unknown error for Kinding in type class: " []
-    Just k -> do
-      lift $ lift $ modify (\ e -> extendData u (ground k) False e) 
-      s <- toTScheme d
-      let c = "c"++u
-      lift $ lift $ modify (\ e -> extendProgDef c s (EVar c) e)
-      let l = length fts
-          pats = makeVarNs "t" l
+  let d2 = applyK subst (KVar kname)
+  lift $ lift $ modify (\ e -> extendData u (ground d2) False e) 
+  s <- toTScheme d
+  let c = "C"++u
+  lift $ lift $ modify (\ e -> extendProgDef c s (Con c) e)
+  let l = length fts
+      pats = makeVarNs "t" l
 --  emit pats
-      defs <- mapM (makeSelector c pats) (zip [1..] meths)
-      mapM_ ( \ (xi, sqi, defi) -> lift $ lift $ modify (\ e -> extendProgDef xi sqi defi e)) defs
+  defs <- mapM (makeSelector c pats) (zip [1..] meths)
+  mapM_ ( \ (xi, sqi, defi) -> lift $ lift $ modify (\ e -> extendProgDef xi sqi defi e)) defs
   where makeSelector c pats (i, (xi, qti)) = do
           sq <- qToTScheme qti
           return (xi, sq, Lambda "d" (Match (EVar "d") [(c, pats, EVar $ pats !! (i-1)  )]))
@@ -261,7 +250,7 @@ checkInst (Inst (qs, u) defs) = do
   uniRes <- lift get
   ft' <- toTScheme ft
   let  types = map (applyE uniRes) tyss
-       datas = map fst $ dataType gEnv
+--       datas = map fst $ dataType gEnv
 --  emit $ (hsep $ map disp types)
   defTypes <- mapM (\n -> checkMethod n progs) methNames -- check all implemented methods are defined
   ensureT types defTypes
@@ -359,48 +348,6 @@ addProgErrorPos pos p (ErrMsg ps) = throwError (ErrMsg (ErrLocProg pos p:ps))
 
 addErrorPos ::  SourcePos -> VName -> TCError -> TCMonad a
 addErrorPos pos n (ErrMsg ps) = throwError (ErrMsg (ErrLocOther pos n:ps))
-
-{-
-match :: [VName] -> [(VName, VName)] -> FType -> FType -> Maybe [(VName, VName)]
-match datas env (FVar x) (FVar y) |  x `elem` datas || y `elem` datas =
-  if x == y then return env
-  else Nothing
-
-match datas env (FVar x) (FVar y) = 
-  case lookup x env of
-    Just z -> if z == y then return env
-              else Nothing
-    Nothing -> return $ (x, y):env
-
-match datas env (Arrow f1 f2) (Arrow a1 a2) = do
-  r1 <- match datas env f1 a1
-  r2 <- match datas r1 f2 a2
-  return r2
-
-match datas env (FCons x xs) (FCons y ys) | x == y = do
-  let args = zip xs ys
-  new <- foldM helper env args
-  return new
-  where helper e (f1, f2) = do
-          r <- match datas e f1 f2
-          return r
-match _ _ _ _ = Nothing
--}
--- ftype1 = FCons "Eq" [FVar "E", FVar "E"]
--- ftype2 = FCons "Eq" [FVar "C", FVar "E"]
--- test1 = match [] [] ftype1 ftype2
---test2 = alphaEq [] ftype2 ftype1
--- inverse :: [(VName, VName)] -> [(VName, VName)]
--- inverse ls = map (\(x, y) -> (y, x)) ls
-
--- alphaEq :: [VName] -> FType -> FType -> Bool
--- alphaEq datas f1 f2 =
---   case match datas [] f1 f2 of
---     Nothing -> False
---     Just s -> let sub = map (\(x, y) -> (x, FVar y)) (inverse s)
---                   f2' = applyF sub f2 in
---               if f2' == f1 then True
---               else False
                          
 type PSubst = [(VName, VName)]  
 
@@ -479,18 +426,16 @@ unification t1 t2 = do
   lift $ put $ combine new subs
 
 -- sideeffect: throwing error, using the global counter
--- noted: this unification algorithm will be extended
--- once we decided to support higher kind like Monad.. And higher kinding
--- will be supported as well.
 
 unify :: Exp -> Exp -> TCMonad Subst
-unify t (Forall y f) = unify (Forall y f) t
 
 -- The following is a simple extension of unification to support data polymorphism a la Jones. 
 unify (Forall y f) t = do
- n <- makeName "X"
+ n <- makeName "x"
  let f' = applyE [(y, EVar n)] f in
    unify f' t
+
+unify t (Forall y f) = unify (Forall y f) t   
 -----------------------------------
  
 unify (Arrow t1 t2) (Arrow a1 a2) = do
@@ -503,20 +448,15 @@ unify (FApp t1 t2) (FApp a1 a2) = do
   s2 <- unify (applyE s1 t2) (applyE s1 a2) 
   return $ combine s2 s1
 
--- unify (FApp x args1) (FApp y args2) = do
---   let args = zip args1 args2
---   s <- unifyl args
---   return s
---   -- | otherwise = tcError "Unification failure: "
---   --          [(disp "trying to unify ", disp x),(disp "with ", disp y)]
---   where unifyl eqs = foldM helper [] eqs
---         helper sub (p1,  p2) = do
---           newSub <- unify (applyF sub p1) (applyF sub p2)
---           return $ combine newSub sub
-
 unify (EVar tn) t =
   varBind tn t
+  
 unify t (EVar tn) = varBind tn t
+
+unify (Con x) (Con y) = if x == y then return [] else
+                          tcError "Unification failure: "
+                          [(disp "trying to unify ", disp x),(disp "with ", disp y)]
+                          
 unify t t' = tcError "Unification failure: "
            [(disp "trying to unify ", disp t),(disp "with ", disp t')]
 
@@ -524,27 +464,14 @@ varBind x t | t == EVar x = return []
             | x `S.member` freeVar t =
                 tcError "Occur-Check failure: "
                 [(disp "trying to unify ", disp x),(disp "with ", disp t)]
-            | otherwise = do
-                  env <- lift $ lift get
-                  let datas = map fst $ dataType env
-                  if x `elem` datas then
-                    case t of
-                      EVar y ->
-                        if not (y `elem` datas) then return [(y, EVar x)]
-                        else tcError "Unification failure: "
-                             [(disp "trying to unify ", disp x),(disp "with ", disp t)]
-                      _ -> tcError "Unification failure: "
-                           [(disp "trying to unify ", disp x),(disp "with ", disp t)]
-                    else 
-                    return [(x, t)]
-
-  
+            | otherwise = return [(x, t)]
+                    
 freshInst :: TScheme -> TCMonad QType
 freshInst (Scheme xs t) =
   if null xs
   then return t
   else do
-   newVars <- mapM (\ x -> makeName "X") xs
+   newVars <- mapM (\ x -> makeName "x") xs
    let substs = zip xs (map (\ y -> EVar y) newVars) in
      return $ applyQ substs t
 

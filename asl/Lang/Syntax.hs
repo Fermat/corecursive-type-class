@@ -59,6 +59,7 @@ type Equation = ([Pattern], Exp)
 
 freeVar :: Exp -> S.Set VName
 freeVar (EVar x) = S.insert x S.empty
+freeVar (Con x) = S.empty
 freeVar (Arrow f1 f2) = (freeVar f1) `S.union` (freeVar f2)
 freeVar (FApp f1 f2) = (freeVar f1) `S.union` (freeVar f2)
 freeVar (Forall x f) = S.delete x (freeVar f) 
@@ -77,6 +78,7 @@ freeKVar (KArrow f1 f2) = (freeKVar f1) `S.union` (freeKVar f2)
 type Subst = [(VName, Exp)]        
 
 fv :: Exp -> S.Set VName
+fv (Con x) = S.empty
 fv (EVar x) = S.insert x S.empty
 fv (App f1 f2) = fv f1 `S.union` fv f2
 fv (Lambda x s) = S.delete x (fv s)
@@ -93,7 +95,6 @@ fv (Match p cases) =
             
 fv (Pos _ t) = fv t
 
-
 -- applyQ currently only used at freshInst
 
 applyQ :: Subst -> QType -> QType
@@ -102,7 +103,8 @@ applyQ subs (DArrow fs f) =
       f' = applyE subs f in
   DArrow fs' f'
       
-applyE :: Subst -> Exp -> Exp 
+applyE :: Subst -> Exp -> Exp
+applyE subs a@(Con x) = a
 applyE subs (EVar x) =
   case lookup x subs of
     Just x1 -> x1
@@ -126,11 +128,7 @@ applyE subs (Imply bs h) =
   let a1 = applyE subs h
       a2 = map (applyE subs) bs in
   Imply a2 a1
-
         
--- applyE subs (Pos p f2) =
---   Pos p (applyE subs f2)
-
 -- substituting term
 applyE subs (App a b) = App (applyE subs a) (applyE subs b)
 
@@ -149,6 +147,7 @@ applyE subs (Pos _ p) = applyE subs p
 firstline (Inst a xs) = Inst a [head xs]
 
 apply :: Exp -> VName -> Exp -> Exp
+apply a x (Con t) = Con t
 apply a x (EVar t) = if x == t then a else (EVar t)
 apply a x (App t1 t2) = App (apply a x t1) (apply a x t2)
 apply a x t1@(Lambda y t) =

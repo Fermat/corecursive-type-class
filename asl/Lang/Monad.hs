@@ -21,15 +21,15 @@ newtype Global a = Global { runGlobal :: (StateT Env (ExceptT TCError IO)) a}
   deriving (Functor, Monad, Applicative, MonadState Env, MonadError TCError, MonadIO)
 
 data Env = Env{ progDef :: M.Map VName (TScheme, Exp),  -- (type, def)
-                dataType :: [(VName, (Exp, Bool))], -- (name, kind, whether it is genuine data)
+                dataType :: M.Map VName (Exp, Bool), -- (name, kind, whether it is genuine data)
                 toEval :: [Exp], -- progs
                 axioms :: [(VName, Exp)],
-                lemmas :: [(VName, (Maybe Exp, Exp))] -- (formula, proof)
+                lemmas :: [(VName, (Exp, Exp))] -- (formula, proof)
               }
          deriving Show
 
 emptyEnv :: Env
-emptyEnv = Env {progDef = M.empty, dataType = [], toEval = [], axioms = [], lemmas = []}
+emptyEnv = Env {progDef = M.empty, dataType = M.empty, toEval = [], axioms = [], lemmas = []}
                   
 extendProgDef :: VName -> TScheme -> Exp -> Env -> Env
 extendProgDef v ts t e@(Env {progDef}) = e{progDef = M.insert v (ts, t) progDef}
@@ -38,12 +38,12 @@ extendEval :: Exp -> Env -> Env
 extendEval p e@(Env {toEval}) = e{toEval = p:toEval}
 
 extendData :: VName -> Exp -> Bool -> Env -> Env
-extendData v k b e@(Env {dataType}) = e{dataType =  (v, (k, b)):dataType}
+extendData v k b e@(Env {dataType}) = e{dataType =  M.insert v (k, b) dataType}
 
 extendAxiom :: VName -> Exp -> Env -> Env
 extendAxiom v ts e@(Env {axioms}) = e{axioms =  (v , ts) : axioms}
 
-extendLemma :: VName -> Maybe Exp -> Exp -> Env -> Env
+extendLemma :: VName -> Exp -> Exp -> Env -> Env
 extendLemma v d t e@(Env {lemmas}) = e{lemmas = (v, (d, t)):lemmas}
 
 -- updateAssump :: (M.Map VName FType -> M.Map VName FType) -> Env -> Env
@@ -55,7 +55,7 @@ extendLemma v d t e@(Env {lemmas}) = e{lemmas = (v, (d, t)):lemmas}
 
 instance Disp Env where
   disp env = hang (text "Program Definitions") 2 (vcat
-                [disp n <+> text "::" <+> disp ts $$ text "=" <+> disp t <+> text "\n" | (n, (ts, t)) <- M.toList $ progDef env])  $$ hang (text "Datas") 2 (vcat [ disp n <+> text "::" <+> disp k | (n, (k, _)) <- dataType env])
+                [disp n <+> text "::" <+> disp ts $$ text "=" <+> disp t <+> text "\n" | (n, (ts, t)) <- M.toList $ progDef env])  $$ hang (text "Datas") 2 (vcat [ disp n <+> text "::" <+> disp k | (n, (k, _)) <- M.toList $ dataType env])
              $$
              hang (text "Axioms") 2 (vcat [ disp n <+> text "::" <+> disp k | (n, k) <- axioms env])
              $$

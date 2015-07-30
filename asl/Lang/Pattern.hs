@@ -27,8 +27,8 @@ isCon e = not $ isVar e
 
 getCon (Cons c ps1:ps, e) = c
 
-constructors :: Env -> [VName]
-constructors env = [ n | (n, (_, True)) <- dataType env ]
+-- constructors :: Env -> [VName]
+-- constructors env = [ n | (n, (_, True)) <- M.toList $ dataType env ]
 
 arity :: VName -> Env -> Int
 arity v env = case lookup v (dataType env) of
