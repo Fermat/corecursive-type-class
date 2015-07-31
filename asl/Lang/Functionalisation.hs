@@ -115,20 +115,13 @@ myPi a f = do
   let as = freeVar a
       fs = freeVar f'
       dom = S.toList (S.difference fs as)
-  names <- mapM (\ y -> makeName "d") dom
+  n <- lift get  
+  names <- mapM (\ y -> makeName n) dom
   let cons = map Con names
       sub = zip dom cons
   return $ applyE sub f'
 
-myVarPi a f = do
-  f' <- inst f
-  let dom = S.toList $ freeVar a
-  names <- mapM (\ y -> makeName "d") dom
-  let cons = map Con names
-      sub = zip dom cons
-  return $ applyE sub f'
-
-positive :: Exp -> State Int Exp
+positive :: Exp -> StateT Int (State VName) Exp
 positive h@(Forall x t) = inst h >>= positive
 positive (Imply bds h) = do
   bds' <- mapM (myPi h) bds
@@ -136,23 +129,16 @@ positive (Imply bds h) = do
   return $ Imply res h
 positive h = return h
 
-negative :: Exp -> State Int Exp
+negative :: Exp -> StateT Int (State VName) Exp
 negative (Imply bds h) = do
   res <- mapM positive bds
   return $ Imply res h
   
 negative a = return a
 
--- negative :: Exp -> State Int Exp
--- negative (Imply bds h) = do
---   bds' <- mapM (myVarPi h) bds
---   res <- mapM positive bds'
---   return $ Imply res h
-  
--- negative a = return a
 
-runPositive exp  = evalState (positive exp) 0
--- runNegative exp  = evalState (negative exp) 0
+runPositive exp name = 
+  evalState (evalStateT (positive exp) 0) name
 
 corecursive :: Exp -> Axioms -> Lemmas -> Maybe Exp
 corecursive t axioms lemmas = 
@@ -172,13 +158,13 @@ c1 = Imply [(FApp (Con "Eq") (EVar "y")),
 c2 = Imply [] (FApp (Con "Eq") (Con "Char"))
 
 lm1 = Imply [(FApp (Con "Eq") (EVar "y"))] (FApp (Con "Eq") (FApp (Con "DList") (EVar "y")))
-lm1' = case runPositive (Imply [Forall "y" lm1] (Con "query")) of
-  Imply [x] (Con "query") -> x
+-- lm1' = case runPositive (Imply [Forall "y" lm1] (Con "query")) of
+--   Imply [x] (Con "query") -> x
 
 axiom1 = [("k1", c1), ("k2", c2)]
 
 test4 = runRewrite dl axiom1
-test5 = corecursive lm1' axiom1 [("alpha", lm1)]
+-- test5 = corecursive lm1' axiom1 [("alpha", lm1)]
 t1 = Imply [] (FApp (Con "Eq") (Con "Unit"))
 t2 = Imply [(FApp (Con "Eq") (FApp (EVar "F") (FApp (EVar "G") (EVar "A"))))]
      (FApp (Con "Eq") (FApp (FApp (FApp (Con "Comp") (EVar "F")) (EVar "G")) (EVar "A")))

@@ -197,6 +197,10 @@ inst (Forall x t) = do
    return $ apply (EVar newVar) x t'
 inst a = return a   
 
+quantify t =
+  let fs = S.toList $ freeVar t in
+  foldr (\ z x -> Forall z x) t fs
+  
 flatten :: Exp -> [Exp]
 flatten (Pos _ f) = flatten f
 flatten (Arrow f1 f2) = f1 : flatten f2
