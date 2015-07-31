@@ -136,7 +136,6 @@ negative (Imply bds h) = do
   
 negative a = return a
 
-
 runPositive exp name = 
   evalState (evalStateT (positive exp) 0) name
 

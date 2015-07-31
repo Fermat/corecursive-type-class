@@ -4,7 +4,6 @@ import Lang.PrettyPrint
 import Lang.Functionalisation
 import Lang.Monad
 import Lang.KindInference
--- import Lang.Pattern(arity)
 import Lang.Formulas hiding(combine)
 import Text.Parsec.Pos
 import Text.PrettyPrint hiding(sep)
@@ -34,17 +33,25 @@ checkModule (Module a (d:ds)) = do
 
 -- no implicit polymorphic recursion
 checkDecl :: Decl -> TCMonad ()
-{- todo
+
 checkDecl (EvalDecl p) = do
   (p', _, assump) <- checkProg p
   subs <- lift $ get
+  env <- lift $ lift get
   let assump' = map (\(a , b) -> (a, applyE subs b)) assump
       preds = map snd assump'
-      names = map fst assump'
+      as = lemmas env ++ axioms env
+      preds' = map (\ p -> runRewrite p as) preds
+  check preds' assump'   
+  let names = map fst assump'
+      preds'' = map (\ (Just x) -> x) preds'
       newP = foldr (\ x y -> Lambda x y) p' names
-      term = foldl' (\ x y -> App x y) newP preds
+      term = foldl' (\ x y -> App x y) newP preds''
   lift $ lift $ modify (\ e -> extendEval term e)
--}
+  where check ls assump' =
+          when (any ((==) Nothing) ls) $
+          tcError "unable to construct evidence "
+               [(disp "constraints ", disp assump')]
 
 checkDecl (ProgDecl pos x p) = do
   n <- makeName "x"
@@ -73,8 +80,17 @@ checkDecl (ClassDecl pos c) =
 
 checkDecl (LemmaDecl pos c) = do
   n <- makeName "lem"
-  
-  lift $ lift $ modify (\ e -> extendLemma n (EVar "undefined") c e)
+  env <- lift $ lift get
+  let ax = lemmas env ++ axioms env
+      lm = runPositive c ("C"++n++"D")
+      (Imply [c'] _) = runPositive (Imply [c] (Con "Q")) ("Q"++n++"D")
+      res = corecursive c' ax [(n, lm)]
+  case res of
+    Nothing -> tcError "typing error: "
+               [(disp "unprovable lemma ", disp c)]
+    Just r -> do
+      lift $ lift $ modify (\ e -> extendLemma n lm e)
+      lift $ lift $ modify (\ e -> extendProgDef n (Scheme [] (DArrow [] lm)) r e)
   
 -- (term, type, predicates assumptions)
 checkProg ::  Exp -> TCMonad (Exp, Exp, [(VName, Exp)])
@@ -273,7 +289,7 @@ checkInst (Inst (qs, u) defs) = do
         genAssumps' = reconstruct genAssumps $ concat genForms'
         phi = map (\(x,y) -> (x, EVar y )) $ zip (map fst genAssumps') (map fst impArgs)
         newTerms = map (applyE phi) terms
-        d = foldl' (\ s arg -> App s arg) (EVar $ "c"++ u') newTerms
+        d = foldl' (\ s arg -> App s arg) (EVar $ "C"++ u') newTerms
         constr = foldr (\ a b -> Lambda a b) d $ map fst impArgs in
     case sub of
       Nothing ->

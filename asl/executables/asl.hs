@@ -35,15 +35,14 @@ main = flip catches handlers $ do
                            putStrLn $ "Type Checking success! \n"
 --                           let env' = convert env -- converting the pattern into case-exp
                            print $ disp env
-{-
 --                           print $ disp subs
 --                           putStrLn $ "Beginning Evaluation.  \n"
-                           evalRes <- runEval env' $ toEval env'
+                           evalRes <- runEval env $ toEval env
                            norms <- mapM liftEither evalRes
                            let norms' = zip [1..] norms
                            putStrLn $ "Result of evaluation.  \n"
                            mapM_ (\ (i, t) -> print (int i <+>  text ":"<+> disp t)) norms'
--}
+
                            -- let (Module v a') = a
                            -- ensureTypeCheck a'
                            -- putStrLn $ "Preprocessing.. \n"

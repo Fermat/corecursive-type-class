@@ -40,11 +40,13 @@ instance Eq a, Eq (DList (DList a)) => Eq (DList a) where
                           Con c cs -> False
                           Ni -> True
 
-
+lemma Eq Nat
 lemma forall a . Eq a => Eq (DList a)
 
 test = eq (Con Z (Con (Con Z (Con (Con Z Ni) Ni)) Ni))  (Con Z (Con (Con Z Ni) Ni))
--- reduce test
+test1 = eq (Con Z (Con (Con Z (Con (Con Z Ni) Ni)) Ni)) (Con Z (Con (Con Z (Con (Con Z Ni) Ni)) Ni))  
+reduce test
+reduce test1
 -- reduce eq (con z (con (con z (con (con z ni) ni)) ni)) (con z (con (con z (con (con z ni) ni)) ni))
 
 -- (con z (con (con z (con (con z ni) ni)) ni))

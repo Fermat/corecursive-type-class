@@ -27,9 +27,9 @@ reduce (App (Lambda x t1) t2) = do
 --  emit $ (text "reducing" <+> disp (App (Lambda x t1) t2))  
   reduce $ apply t2 x t1
 
-reduce (FApp (Lambda x t1) t2) = do
---  emit $ (text "reducing" <+> disp (FApp (Lambda x t1) t2))  
-  reduce $ apply t2 x t1
+-- reduce (FApp (Lambda x t1) t2) = do
+-- --  emit $ (text "reducing" <+> disp (FApp (Lambda x t1) t2))  
+--   reduce $ apply t2 x t1
 
 reduce (App t1 t2) = do
 --  emit $ (text "reducing" <+> disp (App t1 t2))  
@@ -41,15 +41,15 @@ reduce (App t1 t2) = do
         isLambda (Pos _ p) = isLambda p
         isLambda _ = False
 
-reduce (FApp t1 t2) = do
---  emit $ (text "reducing" <+> disp (FApp t1 t2))  
-  a <- reduce t1
-  if isLambda a
-    then reduce $ FApp a t2
-    else return $ FApp a t2
-  where isLambda (Lambda x t) = True
-        isLambda (Pos _ p) = isLambda p
-        isLambda _ = False
+-- reduce (FApp t1 t2) = do
+-- --  emit $ (text "reducing" <+> disp (FApp t1 t2))  
+--   a <- reduce t1
+--   if isLambda a
+--     then reduce $ FApp a t2
+--     else return $ FApp a t2
+--   where isLambda (Lambda x t) = True
+--         isLambda (Pos _ p) = isLambda p
+--         isLambda _ = False
 
 reduce (Lambda x t) = do
 --  emit $ (text "reducing" <+> disp (Lambda x t))
@@ -93,12 +93,12 @@ reduce ill@(Match p branches) = do
   p' <- reduce p
   case p' of
     a@(App p1 p2) -> do
-      let ((EVar c):rs) = flatApp a
+      let ((Con c):rs) = flatApp a
       createRed c rs branches
-    b@(FApp p1 p2) -> do
-      let ((EVar c):rs) = flatApp b
-      createRed c rs branches  
-    EVar c -> do
+    -- b@(FApp p1 p2) -> do
+    --   let ((EVar c):rs) = flatApp b
+    --   createRed c rs branches  
+    Con c -> do
 --      emit $ (text "in here" <+> disp ill)
       createRed c [] branches
     t -> tcError "stucking situation"
@@ -123,10 +123,10 @@ findBranch c ((cons, args, p):xs) =
   if c == cons then Just (cons, args, p)
     else findBranch c xs
   
-createArgs ftype = do
-  let argsType = flatten ftype
-  args <- mapM (\ x -> makeName "d") argsType
-  return $ zip (map EVar args) argsType
+-- createArgs ftype = do
+--   let argsType = flatten ftype
+--   args <- mapM (\ x -> makeName "d") argsType
+--   return $ zip (map EVar args) argsType
 
 getHead (Arrow f1 f2) = getHead f2
 getHead (Pos _ f) = getHead f

@@ -56,9 +56,13 @@ instance Eq (f (Fix (Comp g f) g)) => Eq (Fix f g) where
                   Fix s -> case y of
  		      	    Fix t -> eq s t
 
+lemma (forall x . Eq x => Eq (f x)) => Eq (Fix f Pair)
+
 test = eq (Fix (Cons Unit (Fix (Comp (Pair Nil Nil))))) (Fix Nil)
+test1 = eq (Fix (Cons Unit (Fix (Comp (Pair Nil Nil))))) (Fix (Cons Unit (Fix (Comp (Pair Nil Nil)))))
 -- reduce eq (Fix (Cons Unit (Fix (Comp (Pair Nil Nil))))) (Fix (Cons Unit (Fix (Comp (Pair nil nil)))))
 --  (fix nil)
--- reduce test
+reduce test
+reduce test1
 -- (fix nil)
 

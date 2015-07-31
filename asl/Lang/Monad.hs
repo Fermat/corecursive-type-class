@@ -24,7 +24,7 @@ data Env = Env{ progDef :: M.Map VName (TScheme, Exp),  -- (type, def)
                 dataType :: M.Map VName (Exp, Bool), -- (name, kind, whether it is genuine data)
                 toEval :: [Exp], -- progs
                 axioms :: [(VName, Exp)],
-                lemmas :: [(VName, (Exp, Exp))] -- (formula, proof)
+                lemmas :: [(VName, Exp)] -- (formula, proof)
               }
          deriving Show
 
@@ -43,8 +43,8 @@ extendData v k b e@(Env {dataType}) = e{dataType =  M.insert v (k, b) dataType}
 extendAxiom :: VName -> Exp -> Env -> Env
 extendAxiom v ts e@(Env {axioms}) = e{axioms =  (v , ts) : axioms}
 
-extendLemma :: VName -> Exp -> Exp -> Env -> Env
-extendLemma v d t e@(Env {lemmas}) = e{lemmas = (v, (d, t)):lemmas}
+extendLemma :: VName -> Exp -> Env -> Env
+extendLemma v t e@(Env {lemmas}) = e{lemmas = (v,  t):lemmas}
 
 -- updateAssump :: (M.Map VName FType -> M.Map VName FType) -> Env -> Env
 -- updateAssump f e@(Env {assump}) = e{assump = f assump}
@@ -59,7 +59,7 @@ instance Disp Env where
              $$
              hang (text "Axioms") 2 (vcat [ disp n <+> text "::" <+> disp k | (n, k) <- axioms env])
              $$
-             hang (text "Lemmas") 2 (vcat [ disp n <+> text "::" <+> disp k <+> text "=" <+> disp d | (n, (d, k)) <- lemmas env])
+             hang (text "Lemmas") 2 (vcat [ disp n <+> text "::" <+> disp k | (n,  k) <- lemmas env])
              $$
 
              hang (text "To be reduce") 2 (vcat
