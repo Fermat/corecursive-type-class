@@ -13,14 +13,14 @@ The implementation includes polymorphic type inference, type class resolution an
 a naive version of interpreter.
 
 ASL support guided corecursive evidence construction through the ''lemma'' mechanism, 
-and sometimes this mechanism can be full automized.
+and sometimes this mechanism can be fully automized.
 
 ```haskell
 module dlist where
 
 data DList a where
- Ni :: DList a
- Con :: a -> (DList (DList a)) -> DList a
+  Ni :: DList a
+  Con :: a -> (DList (DList a)) -> DList a
 
 data Bool where
      True :: Bool
@@ -28,7 +28,7 @@ data Bool where
 
 and = \ x y . case x of
                 True -> y
-		False -> False
+                False -> False
 
 data Nat where
   Z :: Nat
@@ -41,10 +41,10 @@ instance Eq Nat => Eq Nat where
   eq = \ x y . case x of
                  Z -> case y of
 		         Z -> True
-			 S n -> False
-	         S m -> case y of
+                         S n -> False
+                 S m -> case y of
                           Z -> False
-			  S n -> eq m n
+                          S n -> eq m n
                   
 instance Eq a, Eq (DList (DList a)) => Eq (DList a) where
    eq = \ x y . case x of
