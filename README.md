@@ -12,53 +12,58 @@ instance declaration.
 The implementation includes polymorphic type inference, type class resolution and
 a naive version of interpreter.
 
-Type class resolution is lazy, namely, evidence of a type class will not be 
-constructed until it is needed. Through laziness, ASL can support corecursive
-evidence, i.e., the evidence construction involves infinite steps.
+ASL support guided corecursive evidence construction through the ''lemma'' mechanism, 
+and sometimes this mechanism can be full automized.
 
 ```haskell
 module dlist where
 
-data DList A where
- ni :: DList A
- con :: A -> (DList (DList A)) -> DList A
- 
+data DList a where
+ Ni :: DList a
+ Con :: a -> (DList (DList a)) -> DList a
+
 data Bool where
-     true :: Bool
-     false :: Bool
+     True :: Bool
+     False :: Bool
 
 and = \ x y . case x of
-                true -> y
-                false -> false
+                True -> y
+		False -> False
 
 data Nat where
-  z :: Nat
-  s :: Nat -> Nat
-  
-class Eq A where
-   eq :: Eq A => A -> A -> Bool
+  Z :: Nat
+  S :: Nat -> Nat
+
+class Eq a where
+   eq :: Eq a => a -> a -> Bool
 
 instance Eq Nat => Eq Nat where
   eq = \ x y . case x of
-                 z -> case y of
-                        z -> true
-                        s n -> false
-                 s m -> case y of
-                          z -> false
-                          s n -> eq m n
-                
-instance Eq A, Eq (DList (DList A)) => Eq (DList A) where
+                 Z -> case y of
+		         Z -> True
+			 S n -> False
+	         S m -> case y of
+                          Z -> False
+			  S n -> eq m n
+                  
+instance Eq a, Eq (DList (DList a)) => Eq (DList a) where
    eq = \ x y . case x of
-                  con a as -> case y of
-                                con b bs -> and (eq a b) (eq as bs)
-                                ni -> false
-                  ni -> case y of
-                          con c cs -> false
-                          ni -> true
+                  Con a as -> case y of
+                                Con b bs -> and (eq a b) (eq as bs)
+                                Ni -> False
+                  Ni -> case y of
+                          Con c cs -> False
+                          Ni -> True
 
-test = eq (con z (con (con z (con (con z ni) ni)) ni))  (con z (con (con z ni) ni))
+lemma Eq Nat
 
-reduce test 
+lemma forall a . Eq a => Eq (DList a)
+
+test = eq (Con Z (Con (Con Z (Con (Con Z Ni) Ni)) Ni))  (Con Z (Con (Con Z Ni) Ni))
+test1 = eq (Con Z (Con (Con Z (Con (Con Z Ni) Ni)) Ni)) (Con Z (Con (Con Z (Con (Con Z Ni) Ni)) Ni))  
+
+reduce test
+reduce test1
 ```
 
-The reduction for test above will return false. 
+The reduction for test above will return False and test1 return True. 
