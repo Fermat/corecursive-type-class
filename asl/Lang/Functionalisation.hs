@@ -129,6 +129,7 @@ myVarPi a f = do
   return $ applyE sub f'
 
 positive :: Exp -> State Int Exp
+positive h@(Forall x t) = inst h >>= positive
 positive (Imply bds h) = do
   bds' <- mapM (myPi h) bds
   res <- mapM negative bds'
@@ -137,14 +138,21 @@ positive h = return h
 
 negative :: Exp -> State Int Exp
 negative (Imply bds h) = do
-  bds' <- mapM (myVarPi h) bds
-  res <- mapM positive bds'
+  res <- mapM positive bds
   return $ Imply res h
   
 negative a = return a
 
+-- negative :: Exp -> State Int Exp
+-- negative (Imply bds h) = do
+--   bds' <- mapM (myVarPi h) bds
+--   res <- mapM positive bds'
+--   return $ Imply res h
+  
+-- negative a = return a
+
 runPositive exp  = evalState (positive exp) 0
-runNegative exp  = evalState (negative exp) 0
+-- runNegative exp  = evalState (negative exp) 0
 
 corecursive :: Exp -> Axioms -> Lemmas -> Maybe Exp
 corecursive t axioms lemmas = 
@@ -164,8 +172,9 @@ c1 = Imply [(FApp (Con "Eq") (EVar "y")),
 c2 = Imply [] (FApp (Con "Eq") (Con "Char"))
 
 lm1 = Imply [(FApp (Con "Eq") (EVar "y"))] (FApp (Con "Eq") (FApp (Con "DList") (EVar "y")))
-lm1' = case runNegative (Imply [(Imply [lm1] (Con "what"))] (Con "what") ) of
-  (Imply [(Imply [l] (Con "what"))] (Con "what") ) -> l
+lm1' = case runPositive (Imply [Forall "y" lm1] (Con "query")) of
+  Imply [x] (Con "query") -> x
+
 axiom1 = [("k1", c1), ("k2", c2)]
 
 test4 = runRewrite dl axiom1
@@ -179,7 +188,8 @@ t3 = Imply [(FApp (Con "Eq") (EVar "y"))] (FApp (Con "Eq") (FApp (Con "Pair") (E
 t4 = Imply [(FApp (Con "Eq") (EVar "A")), (FApp (Con "Eq") (EVar "R"))]
      (FApp (Con "Eq") (FApp (FApp (Con "GS") (EVar "A")) (EVar "R")))
 t5' = runPositive t5
-t5'' = runNegative (Imply [(Imply [Forall "F" t5] (Con "what"))] (Con "what") )
+t5'' = runPositive (Imply [Forall "F" t5] (Con "what"))
+t5''' = runPositive (Imply [t5] (Con "what"))
 t5 = Imply [Forall "X" $ Imply [(FApp (Con "Eq") (EVar "X"))] (FApp (Con "Eq") (FApp (EVar "F") (EVar "X")))]
      (FApp (Con "Eq") (FApp (FApp (Con "Fix") (EVar "F")) (Con "Pair")))
 t6 = Imply [Con "B"] (FApp (Con "Eq") (FApp (FApp (Con "Fix") (FApp (Con "GS") (Con "Unit"))) (Con "Pair")))     
