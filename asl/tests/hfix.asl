@@ -1,6 +1,6 @@
-module tom where
-data Comp f g a where
-   Comp :: (f (g a)) -> Comp f g a
+module hfix where
+data H f a where
+   H ::  (f a) -> (f a) -> H f a
 
 data Unit where
   Unit :: Unit
@@ -12,8 +12,8 @@ data GSeqF a r where
    Nil :: GSeqF a r
    Cons :: a -> r -> GSeqF a r
 
-data Fix f g where
- Fix ::  (f (Fix (Comp g f) g)) -> Fix f g
+data HFix h f where
+ In :: (f (HFix h (h f))) -> HFix h f
 
 data Bool where
      True :: Bool
@@ -31,12 +31,6 @@ instance  => Eq Unit where
                   Unit -> case y of 
                              Unit -> True
 
-
-instance Eq (f (g a)) => Eq (Comp f g a) where
-   eq = \ x y . case x of
-                   Comp s -> case y of 
-                                Comp t  ->  eq s t
-
 instance Eq a, Eq a => Eq (Pair a) where
   eq = \ x y . case x of
                  Pair x1 y1 -> case y of
@@ -51,20 +45,19 @@ instance Eq a, Eq r => Eq (GSeqF a r) where
                                    Nil  -> False
     				   Cons z zs -> and (eq q z) (eq qs zs)
 
-instance Eq (f (Fix (Comp g f) g)) => Eq (Fix f g) where
+instance Eq (f (HFix h (h f))) => Eq (HFix h f) where
    eq = \ x y . case x of
-                  Fix s -> case y of
- 		      	    Fix t -> eq s t
+                  In s -> case y of
+ 		            In t -> eq s t
 
-lemma (forall x . Eq x => Eq (f x)) => Eq (Fix f Pair)
-lemma (forall x . Eq x => Eq (f x), forall x . Eq x => Eq (g x)) =>
-             Eq (Fix f g)
+-- lemma (forall x . Eq x => Eq (f x)) => Eq (Fix f Pair)
+lemma (forall x . Eq x => Eq (f x), forall x . Eq x => Eq (f x)) => Eq (HFix h f)
 
-test = eq (Fix (Cons Unit (Fix (Comp (Pair Nil Nil))))) (Fix Nil)
-test1 = eq (Fix (Cons Unit (Fix (Comp (Pair Nil Nil))))) (Fix (Cons Unit (Fix (Comp (Pair Nil Nil)))))
+-- test = eq (Fix (Cons Unit (Fix (Comp (Pair Nil Nil))))) (Fix Nil)
+-- test1 = eq (Fix (Cons Unit (Fix (Comp (Pair Nil Nil))))) (Fix (Cons Unit (Fix (Comp (Pair Nil Nil)))))
 -- reduce eq (Fix (Cons Unit (Fix (Comp (Pair Nil Nil))))) (Fix (Cons Unit (Fix (Comp (Pair nil nil)))))
 --  (fix nil)
-reduce test
-reduce test1
+-- reduce test
+-- reduce test1
 -- (fix nil)
 

@@ -40,7 +40,7 @@ class Eq a where
 instance Eq Nat => Eq Nat where
   eq = \ x y . case x of
                  Z -> case y of
-		         Z -> True
+                         Z -> True
                          S n -> False
                  S m -> case y of
                           Z -> False

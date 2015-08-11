@@ -1,40 +1,46 @@
 module eq where
 
 data Bool where
-  true :: Bool
-  false :: Bool
+  True :: Bool
+  False :: Bool
 
 and = \ x y . case x of
-                true -> y
-		false -> false
+                True -> y
+		False -> False
 
 data Nat where
-  z :: Nat
-  s :: Nat -> Nat
+  Z :: Nat
+  S :: Nat -> Nat
 
-data List A where
-  nil :: List A
-  cons :: A -> List A -> List A
+data List a where
+  Nil :: List a
+  Cons :: a -> List a -> List a
 
-class Eq A where
-   eq :: Eq A => A -> A -> Bool
+class Eq a where
+   eq :: Eq a => a -> a -> Bool
 
-instance Eq Nat where
+instance Eq Nat => Eq Nat where
   eq = \ x y . case x of
-                 z -> case y of
-		         z -> true
-			 s n -> false
-	         s m -> case y of
-                          z -> false
-			  s n -> eq m n
+                 Z -> case y of
+		         Z -> True
+			 S n -> False
+	         S m -> case y of
+                          Z -> False
+			  S n -> eq m n
 
-instance Eq A => Eq (List A) where
+instance Eq a, Eq (List a) => Eq (List a) where
    eq = \ l1 l2 . case l1 of
-                    nil -> case l2 of
-                             nil -> true
-			     cons y ys -> false
-                    cons x xs -> case l2 of
-		                   nil -> false
-				   cons y ys -> and (eq x y) (eq xs ys)
+                    Nil -> case l2 of
+                             Nil -> True
+			     Cons y ys -> False
+                    Cons x xs -> case l2 of
+		                   Nil -> False
+				   Cons y ys -> and (eq x y) (eq xs ys)
+lemma Eq Nat 
+lemma Eq a => Eq (List a)
 
-test = eq (cons z nil) (cons z (cons z nil))
+-- lemma Eq (List Nat)
+test = eq (Cons Z Nil) (Cons Z (Cons Z Nil))
+test1 = eq (Cons Z (Cons Z Nil)) (Cons Z (Cons Z Nil))
+reduce test
+reduce test1

@@ -29,7 +29,7 @@ main = flip catches handlers $ do
       case parseModule filename cnts of
              Left e -> throw e
              Right a -> do putStrLn $ "Parsing success! \n"
-                           print $ disp a
+--                           print $ disp a
                            res <- runTypeChecker a
                            ((_, subs),env) <- liftEither res
                            putStrLn $ "Type Checking success! \n"
