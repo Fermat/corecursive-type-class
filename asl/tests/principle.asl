@@ -47,13 +47,23 @@ instance Eq a, Eq (Pair a (f (f a))) => Eq (HBush f a) where
                  HBNode a -> case y of
                               HBLeaf -> False
                               HBNode b -> eq a b
-                            
+
+-- instance Eq a, Eq (f (Pair a a)) => Eq (HPTree f a) where
+--   eq = \ x y . case x of
+--                  HBLeaf -> case y of
+--                             HBLeaf -> True
+--                             HBNode a -> False
+--                  HBNode a -> case y of
+--                               HBLeaf -> False
+--                               HBNode b -> eq a b
+
 
 instance Eq (f (Mu f) a) => Eq (Mu f a) where
    eq = \ x y . case x of
                   In s -> case y of
  		            In t -> eq s t
 
+lemma Eq x => Eq (HBush (Mu HBush) x)
 lemma Eq x => Eq (Mu HBush x)
 
 term1 = In HBLeaf

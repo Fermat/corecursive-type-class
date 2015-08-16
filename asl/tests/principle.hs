@@ -16,7 +16,9 @@ data HPTree f a where
 data Mu f a where
   In :: f (Mu f) a -> Mu f a
   
-
+instance Eq Unit where
+  (==) a b = True
+  
 instance (Eq a, Eq b) => Eq (Pair a b) where
   (==) = \ x y -> case x of
                  Pair x1 y1 -> case y of
