@@ -47,7 +47,7 @@ instance Eq a, Eq b => Eq (Pair a b) where
                  Pair x1 y1 -> case y of
                                 Pair x2 y2 -> and (eq x1 x2) (eq y1 y2)
 
-instance Eq a, Eq (Pair a (f (f a))) => Eq (HBush f a) where
+instance Eq (Pair a (f (f a))) => Eq (HBush f a) where
   eq = \ x y . case x of
                  HBLeaf -> case y of
                             HBLeaf -> True

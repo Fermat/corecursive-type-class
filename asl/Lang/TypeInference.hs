@@ -296,31 +296,33 @@ checkInst (Inst (qs, u) defs) = do
 --  emit $ (hsep $ map disp types)
   defTypes <- mapM (\n -> checkMethod n progs) methNames -- check all implemented methods are defined
   ensureT types defTypes
-
   let impArgs = zip args qs
 --      lEnv = impArgs  ++ [("dict", u) ]
-      
       forms = divide $ map snd impArgs
 --      lEnv' = reconstruct impArgs $ concat forms
       genAssumps = map (\ (x,y) -> (x, applyE uniRes y)) $ concat $ map tTrd res
       terms = map tFst res
       genForms = divide $ map snd genAssumps
       precondition = check genForms forms && check forms genForms
+      lengCondition = length (concat genForms) == length (concat forms)
       -- (Let [("dict", d)] $ PVar "dict" )
-  if precondition then
+  if precondition && lengCondition then do
     let genForms' = reorder genForms forms
         sub = firstSub genForms' forms
         genAssumps' = reconstruct genAssumps $ concat genForms'
         phi = map (\(x,y) -> (x, EVar y )) $ zip (map fst genAssumps') (map fst impArgs)
         newTerms = map (applyE phi) terms
         d = foldl' (\ s arg -> App s arg) (EVar $ "C"++ u') newTerms
-        constr = foldr (\ a b -> Lambda a b) d $ map fst impArgs in
+        constr = foldr (\ a b -> Lambda a b) d $ map fst impArgs 
+    -- emit $ show genForms'
+    -- emit $ show forms
     case sub of
-      Nothing ->
+      Nothing -> 
         tcError "Required predicates does not match specified predicates: "
         [(disp "Required:", hsep $ map disp $ concat genForms'),(disp "Specified: ", hsep $ map disp $ concat forms)]
-      Just _ -> do
- --       emit $ (hsep $ map disp genAssumps)
+      Just my -> do
+--        emit $ show my
+--       emit $ (hsep $ map disp genAssumps)
         name <- makeName "e"
         lift $ lift $ modify (\ e -> extendProgDef name ft' constr e) -- extend instance func
         lift $ lift $ modify (\ e -> extendAxiom name ft1 e) -- extend axioms

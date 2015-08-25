@@ -150,6 +150,8 @@ firstNon (a:as) = if a == [("Fail", "Fail")] then firstNon as else Just a
 
 -- firstSub datas fss tss, it assumes all the variables in fss is separated from
 -- all the variables in tss.
+-- FIXME: It looks like when the length of two inputs are not equal, we can still
+-- have some matchable result...
 firstSub :: [[Exp]] -> [[Exp]] -> Maybe [(VName, VName)]
 firstSub  fss tss = firstNon $ formulasEq fss tss 
 
