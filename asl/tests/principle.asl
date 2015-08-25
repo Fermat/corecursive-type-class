@@ -29,10 +29,9 @@ and = \ x y . case x of
 		False -> False
 
 instance  => Eq Unit where
-   eq = \ x y . True
-                -- case x of
-                --   Unit -> case y of 
-                --              Unit -> True
+   eq = \ x y . case x of
+                   Unit -> case y of 
+                              Unit -> True
 
 instance Eq a, Eq b => Eq (Pair a b) where
   eq = \ x y . case x of
@@ -48,16 +47,6 @@ instance Eq a, Eq (Pair a (f (f a))) => Eq (HBush f a) where
                               HBLeaf -> False
                               HBNode b -> eq a b
 
--- instance Eq a, Eq (f (Pair a a)) => Eq (HPTree f a) where
---   eq = \ x y . case x of
---                  HBLeaf -> case y of
---                             HBLeaf -> True
---                             HBNode a -> False
---                  HBNode a -> case y of
---                               HBLeaf -> False
---                               HBNode b -> eq a b
-
-
 instance Eq (f (Mu f) a) => Eq (Mu f a) where
    eq = \ x y . case x of
                   In s -> case y of
@@ -70,9 +59,10 @@ term1 = In HBLeaf
 
 term2 = In (HBNode (Pair Unit term1))
 
-test = eq term2 term1
+-- test = eq term2 term1
 test1 = eq term2 term2
+
 -- test2 = eq a1 a1
-reduce test
+reduce test1
 -- reduce test1
 -- reduce test2

@@ -24,7 +24,7 @@ runReduce p env =
 -- all the let-bind variable will be renamed to fresh variable.
 reduce :: Exp -> Eval Exp
 reduce (App (Lambda x t1) t2) = do
---  emit $ (text "reducing" <+> disp (App (Lambda x t1) t2))  
+  emit $ (text "reducing" <+> disp (App (Lambda x t1) t2))  
   reduce $ apply t2 x t1
 
 -- reduce (FApp (Lambda x t1) t2) = do
@@ -32,7 +32,7 @@ reduce (App (Lambda x t1) t2) = do
 --   reduce $ apply t2 x t1
 
 reduce (App t1 t2) = do
---  emit $ (text "reducing" <+> disp (App t1 t2))  
+  emit $ (text "reducing" <+> disp (App t1 t2))  
   a <- reduce t1
   if isLambda a
     then reduce $ App a t2
@@ -52,7 +52,7 @@ reduce (App t1 t2) = do
 --         isLambda _ = False
 
 reduce (Lambda x t) = do
---  emit $ (text "reducing" <+> disp (Lambda x t))
+  emit $ (text "reducing" <+> disp (Lambda x t))
   return $ Lambda x t
 reduce a@(Con x) = return a
 reduce (EVar x) = do
@@ -73,7 +73,7 @@ reduce (EVar x) = do
                      --                    [(disp "undefined variable: ", disp x), (disp "local env: ", disp $ show loc)]
 
 reduce u@(Let defs t) = do
---  emit $ (text "reducing" <+> disp u)
+  emit $ (text "reducing" <+> disp u)
   let  old = map fst defs
        ds = map snd defs
        new = map (\ x -> "`"++x) old
@@ -89,7 +89,7 @@ reduce u@(Let defs t) = do
     where substList sub p = foldl' (\ x (v, t) -> apply t v x) p sub
 
 reduce ill@(Match p branches) = do
---  emit $ (text "reducing" <+> disp ill)  
+  emit $ (text "reducing" <+> disp ill)  
   p' <- reduce p
   case p' of
     a@(App p1 p2) -> do
@@ -115,7 +115,7 @@ reduce (Pos _ t) = reduce t
 createRed c defs branches =
   case findBranch c branches of
     Nothing -> tcError "stucking situation"
-               [(disp "unknown data constructor: ", disp c <+> (text $ show defs) <+> (text $ show branches) )]
+               [(disp "unknown data constructor: ", disp c <+> (text $ "what" ++ show defs) <+> (text $ show branches) )]
     Just (_, args, p) -> reduce $ Let (zip args defs) p
   
 findBranch c [] = Nothing

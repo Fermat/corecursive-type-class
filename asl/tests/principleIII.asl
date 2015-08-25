@@ -38,10 +38,9 @@ and = \ x y . case x of
 		False -> False
 
 instance  => Eq Unit where
-   eq = \ x y . True
-                -- case x of
-                --   Unit -> case y of 
-                --              Unit -> True
+   eq = \ x y . case x of
+                   Unit -> case y of 
+                              Unit -> True
 
 instance Eq a, Eq b => Eq (Pair a b) where
   eq = \ x y . case x of
