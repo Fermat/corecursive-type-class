@@ -43,7 +43,7 @@ checkDecl (EvalDecl p) = do
       axs = axioms env
       lems = lemmas env
       preds = map snd assump'
-      autoLems = concat $ map (\ x -> constructLemma x axs) preds
+      autoLems = concat $ map (\ x -> constructLemma x (lems ++ axs)) preds
   autos <- mapM (\ x -> makeName "auto") autoLems
   zipWithM (\ x y -> proving x y (lems ++ axs)) autos autoLems
   let
