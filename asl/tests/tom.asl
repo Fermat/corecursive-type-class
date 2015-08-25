@@ -56,7 +56,7 @@ instance Eq (f (Fix (Comp g f) g)) => Eq (Fix f g) where
                   Fix s -> case y of
  		      	    Fix t -> eq s t
 
-lemma Eq (Fix f Pair)
+--lemma Eq (Fix f Pair)
 lemma (forall x . Eq x => Eq (f x)) => Eq (Fix f Pair)
 lemma (forall x . Eq x => Eq (f x), forall x . Eq x => Eq (g x)) =>
              Eq (Fix f g)
