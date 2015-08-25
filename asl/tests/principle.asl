@@ -63,8 +63,8 @@ instance Eq (f (Mu f) a) => Eq (Mu f a) where
                   In s -> case y of
  		            In t -> eq s t
 
-lemma Eq x => Eq (HBush (Mu HBush) x)
-lemma Eq x => Eq (Mu HBush x)
+-- lemma Eq x => Eq (HBush (Mu HBush) x)
+-- lemma Eq x => Eq (Mu HBush x)
 
 term1 = In HBLeaf
 
@@ -74,5 +74,5 @@ test = eq term2 term1
 test1 = eq term2 term2
 -- test2 = eq a1 a1
 reduce test
-reduce test1
+-- reduce test1
 -- reduce test2

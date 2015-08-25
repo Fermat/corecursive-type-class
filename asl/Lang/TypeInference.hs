@@ -4,6 +4,7 @@ import Lang.PrettyPrint
 import Lang.Functionalisation
 import Lang.Monad
 import Lang.KindInference
+import Lang.Lemma
 import Lang.Formulas hiding(combine)
 import Text.Parsec.Pos
 import Text.PrettyPrint hiding(sep)
@@ -39,8 +40,14 @@ checkDecl (EvalDecl p) = do
   subs <- lift $ get
   env <- lift $ lift get
   let assump' = map (\(a , b) -> (a, applyE subs b)) assump
+      axs = axioms env
+      lems = lemmas env
       preds = map snd assump'
-      as = lemmas env ++ axioms env
+      autoLems = concat $ map (\ x -> constructLemma x axs) preds
+  autos <- mapM (\ x -> makeName "auto") autoLems
+  zipWithM (\ x y -> proving x y (lems ++ axs)) autos autoLems
+  let
+      as = lems ++ (zip autos autoLems) ++ axs
       preds' = map (\ p -> runRewrite p as) preds
   check preds' assump'   
   let names = map fst assump'
@@ -52,6 +59,18 @@ checkDecl (EvalDecl p) = do
           when (any ((==) Nothing) ls) $
           tcError "unable to construct evidence "
                [(disp "constraints ", disp assump')]
+        proving n c ax = 
+          let 
+              lm = runPositive c ("C"++n++"D")
+              (Imply [c'] _) = runPositive (Imply [c] (Con "Q")) ("Q"++n++"D")
+              res = corecursive c' ax [(n, lm)] in
+          case res of
+            Nothing -> tcError "typing error: "
+                       [(disp "generated intermediate lemma is unprovable ", disp c)]
+            Just r -> do
+              lift $ lift $ modify (\ e -> extendLemma n lm e)
+              lift $ lift $ modify (\ e -> extendProgDef n (Scheme [] (DArrow [] lm)) r e)
+
 
 checkDecl (ProgDecl pos x p) = do
   n <- makeName "x"

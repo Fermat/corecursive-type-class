@@ -1,46 +1,56 @@
 module dlist where
 
-data DList A where
- ni :: DList A
- con :: A -> (DList (DList A)) -> DList A
+data DList a where
+ Ni :: DList a
+ Con :: a -> (DList (DList a)) -> DList a
  
 data Bool where
-     true :: Bool
-     false :: Bool
+     True :: Bool
+     False :: Bool
 
 and = \ x y . case x of
-                true -> y
-		false -> false
+                True -> y
+		False -> False
 
 data Nat where
-  z :: Nat
-  s :: Nat -> Nat
+  Z :: Nat
+  S :: Nat -> Nat
 
   
-class Eq A where
-   eq :: Eq A => A -> A -> Bool
+class Eq a where
+   eq :: Eq a => a -> a -> Bool
 
-instance Eq Nat => Eq Nat where
-  eq = \ x y . case x of
-                 z -> case y of
-		         z -> true
-			 s n -> false
-	         s m -> case y of
-                          z -> false
-			  s n -> eq m n
+myeq = \ x y . case x of
+                  Z -> case y of
+ 		         Z -> True
+ 			 S n -> False
+ 	          S m -> case y of
+                          Z -> False
+     			  S n -> myeq m n
+   
+instance  => Eq Nat where
+  eq = myeq
+  
+-- \ x y . case x of
+--                  z -> case y of
+-- 		         z -> true
+-- 			 s n -> false
+-- 	         s m -> case y of
+--                           z -> false
+-- 			  s n -> eq m n
    
                 
-instance Eq A, Eq (DList (DList A)) => Eq (DList A) where
+instance Eq a, Eq (DList (DList a)) => Eq (DList a) where
    eq = \ x y . case x of
-                  con a as -> case y of
-                                con b bs -> and (eq a b) (eq as bs)
-                                ni -> false
-                  ni -> case y of
-                          con c cs -> false
-                          ni -> true
+                  Con a as -> case y of
+                                Con b bs -> and (eq a b) (eq as bs)
+                                Ni -> False
+                  Ni -> case y of
+                          Con c cs -> False
+                          Ni -> True
 
-test = eq (con z (con (con z (con (con z ni) ni)) ni))  (con z (con (con z ni) ni))
+test = eq (Con Z (Con (Con Z (Con (Con Z Ni) Ni)) Ni))  (Con Z (Con (Con Z Ni) Ni))
 reduce test
-reduce eq (con z (con (con z (con (con z ni) ni)) ni)) (con z (con (con z (con (con z ni) ni)) ni))
+reduce eq (Con Z (Con (Con Z (Con (Con Z Ni) Ni)) Ni)) (Con Z (Con (Con Z (Con (Con Z Ni) Ni)) Ni))
 
 -- (con z (con (con z (con (con z ni) ni)) ni))

@@ -1,7 +1,7 @@
 module Lang.Formulas
        where
 import Lang.Monad
-import Lang.Syntax
+import Lang.Syntax hiding(match)
 import Control.Monad.State.Lazy
 import Control.Monad
 import Control.Monad.Identity

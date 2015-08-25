@@ -98,9 +98,9 @@ instance Eq a, Eq (f a), Eq (f a), Eq (f (Maybe a)) => Eq (HLam f a) where
                                     HApp u1 u2 -> False
                                     HAbs u -> eq u s1
 
-lemma Eq x => Eq (Mu HBush x)
-lemma Eq x => Eq (Mu HPTree x)
-lemma Eq x => Eq (Mu HLam x)
+-- lemma Eq x => Eq (Mu HBush x)
+-- lemma Eq x => Eq (Mu HPTree x)
+-- lemma Eq x => Eq (Mu HLam x)
 
 term1 = In HBLeaf
 
