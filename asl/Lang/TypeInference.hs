@@ -43,9 +43,11 @@ checkDecl (EvalDecl p) = do
       axs = axioms env
       lems = lemmas env
       preds = map snd assump'
-      autoLems = concat $ map (\ x -> constructLemma x (lems ++ axs)) preds
+--  emit $ vcat (map disp preds)
+--  emit "enter"
+      autoLems = concat $ map (\ x -> fixLemma x (lems ++ axs) []) preds
   autos <- mapM (\ x -> makeName "auto") autoLems
-  zipWithM (\ x y -> proving x y (lems ++ axs)) autos autoLems
+  zipWithM proving autos autoLems
   let
       as = lems ++ (zip autos autoLems) ++ axs
       preds' = map (\ p -> runRewrite p as) preds
@@ -59,11 +61,14 @@ checkDecl (EvalDecl p) = do
           when (any ((==) Nothing) ls) $
           tcError "unable to construct evidence "
                [(disp "constraints ", disp assump')]
-        proving n c ax = 
-          let 
+--        proving a b c | trace ("myfun " ++ show b ++ " " ++ show c) False = undefined
+        proving n c = do
+          env <- lift $ lift get
+          let
+              ax = lemmas env ++ axioms env
               lm = runPositive c ("C"++n++"D")
               (Imply [c'] _) = runPositive (Imply [c] (Con "Q")) ("Q"++n++"D")
-              res = corecursive c' ax [(n, lm)] in
+              res = corecursive c' ax [(n, lm)]
           case res of
             Nothing -> tcError "typing error: "
                        [(disp "generated intermediate lemma is unprovable ", disp c)]

@@ -10,7 +10,14 @@ import Data.Maybe(fromJust, catMaybes, mapMaybe)
 import Data.List(delete, nub)
 import Data.Tree(Tree(..), flatten)
 import Control.Monad(join, liftM2)
+import Debug.Trace
 
+fixLemma e p tmp = case (constructLemma e p) of
+                    [] -> tmp
+                    l -> let ns = map (\ x -> "a" ++ show x) [1 .. length l]
+                             l' = zip ns l in
+                         fixLemma e (l' ++ p) (tmp ++ l)
+                  
 -- | Given an expression and a program, construct an Intermediate Lemma
 constructLemma :: Exp -> Program -> [Exp]
 constructLemma e prog = map assembleLemma hasLoopNodes

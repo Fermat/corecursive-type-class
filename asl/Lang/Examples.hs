@@ -11,7 +11,7 @@ import Lang.RTree
 list = [("k1",c1), ("k2",c2)]
   where eq = Con "Eq"
         c1 = Imply [(FApp eq (EVar "x")),(FApp eq (FApp (Con "List") (EVar "x")))] (FApp eq (FApp (Con "List") (EVar "x")))
-        c2 = Imply [] (FApp eq (Con "Nat"))
+        c2 = Imply [(FApp eq (Con "Nat"))] (FApp eq (Con "Nat"))
 
 dlist :: [(VName, Exp)]
 dlist = [("k1",c1), ("k2",c2)]

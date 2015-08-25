@@ -28,16 +28,14 @@ myeq = \ x y . case x of
                           Z -> False
      			  S n -> myeq m n
    
-instance  => Eq Nat where
-  eq = myeq
-  
--- \ x y . case x of
---                  z -> case y of
--- 		         z -> true
--- 			 s n -> false
--- 	         s m -> case y of
---                           z -> false
--- 			  s n -> eq m n
+instance Eq Nat => Eq Nat where
+  eq = \ x y . case x of
+                 Z -> case y of
+		         Z -> True
+			 S n -> False
+	         S m -> case y of
+                          Z -> False
+			  S n -> eq m n
    
                 
 instance Eq a, Eq (DList (DList a)) => Eq (DList a) where

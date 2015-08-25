@@ -45,14 +45,14 @@ instance Eq a, Eq (List a) => Eq (List a) where
                     Cons x xs -> case l2 of
 		                   Nil -> False
 				   Cons y ys -> and (eq x y) (eq xs ys)
-lemma Eq Nat 
+-- lemma Eq Nat 
 -- lemma Eq a => Eq (List a)
 
 -- lemma Eq (List Nat)
 test = eq (Cons Z Nil) (Cons Z (Cons Z Nil))
 test1 = eq (Cons Z (Cons Z Nil)) (Cons Z (Cons Z Nil))
 reduce test
-reduce test1
+-- reduce test1
 
 -- test = eq Z (S Z)
 -- reduce test
