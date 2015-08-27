@@ -55,9 +55,13 @@ instance Eq a, Eq (DList (DList a)) => Eq (DList a) where
                           Con c cs -> False
                           Ni -> True
 
-lemma Eq Nat
+-- Now for simple cases like this we don't even need to manually 
+-- input lemma, because it can be automatically generated. The manual
+-- option is still available to handle more complicated situation.
 
-lemma forall a . Eq a => Eq (DList a)
+-- lemma Eq Nat
+
+-- lemma forall a . Eq a => Eq (DList a)
 
 test = eq (Con Z (Con (Con Z (Con (Con Z Ni) Ni)) Ni))  (Con Z (Con (Con Z Ni) Ni))
 test1 = eq (Con Z (Con (Con Z (Con (Con Z Ni) Ni)) Ni)) (Con Z (Con (Con Z (Con (Con Z Ni) Ni)) Ni))  
