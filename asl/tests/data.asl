@@ -37,7 +37,7 @@ instance Eq Nat => Eq Nat where
                           Z -> False
         		  S n -> eq m n
 
-instance Eq a, Eq (List a) => Eq (List a) where
+instance Eq (List a), Eq a => Eq (List a) where
    eq = \ l1 l2 . case l1 of
                     Nil -> case l2 of
                              Nil -> True
@@ -52,7 +52,7 @@ instance Eq a, Eq (List a) => Eq (List a) where
 test = eq (Cons Z Nil) (Cons Z (Cons Z Nil))
 test1 = eq (Cons Z (Cons Z Nil)) (Cons Z (Cons Z Nil))
 reduce test
--- reduce test1
+reduce test1
 
 -- test = eq Z (S Z)
 -- reduce test
