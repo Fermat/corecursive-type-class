@@ -82,7 +82,7 @@ gModule = do
 
 gDecl :: Parser Decl
 gDecl =  try gDataDecl <|>  try instDecl
-        <|> try classDecl <|> try progDecl <|> try reduceDecl <|> lemmaDecl
+        <|> try classDecl <|> try progDecl <|> try reduceDecl <|> lemmaDecl <|> axiomDecl
 
 
 var :: Parser Exp
@@ -308,6 +308,13 @@ lemmaDecl = do
   pos <- getPosition  
   return $ LemmaDecl pos a
 
+axiomDecl :: Parser Decl
+axiomDecl = do
+  reserved "axiom"
+  a <- singleG
+  pos <- getPosition  
+  return $ AxiomDecl pos a
+
 -----------------------Positions -------
   
 wrapPos :: Parser Exp -> Parser Exp
@@ -338,7 +345,7 @@ gottlobStyle = Token.LanguageDef
                     "by", "from", "in", "let", "simpCmp", "invSimp",
                     "case", "of",
                     "data", "if", "then", "else",
-                    "theorem", "proof", "qed", "lemma",
+                    "axiom", "proof", "qed", "lemma",
                     "show",
                     "where", "module",
                     "infix", "infixl", "infixr", "pre", "post",

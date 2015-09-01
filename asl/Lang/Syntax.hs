@@ -49,6 +49,7 @@ data Decl = ProgDecl SourcePos VName Exp
           | EvalDecl Exp
           | OperatorDecl String Int String
           | LemmaDecl SourcePos Exp
+          | AxiomDecl SourcePos Exp
           deriving Show
 
 data Pattern = Var VName

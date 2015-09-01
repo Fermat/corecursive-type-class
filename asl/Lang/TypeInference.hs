@@ -115,6 +115,12 @@ checkDecl (LemmaDecl pos c) = do
     Just r -> do
       lift $ lift $ modify (\ e -> extendLemma n lm e)
       lift $ lift $ modify (\ e -> extendProgDef n (Scheme [] (DArrow [] lm)) r e)
+
+checkDecl (AxiomDecl pos c) = do
+  n <- makeName "Ax"
+  let axiom = runPositive c ("A"++n++"D") 
+  lift $ lift $ modify (\ e -> extendProgDef n (Scheme [] (DArrow [] axiom)) (Con n) e)
+  lift $ lift $ modify (\ e -> extendAxiom n axiom e) -- extend axioms
   
 -- (term, type, predicates assumptions)
 checkProg ::  Exp -> TCMonad (Exp, Exp, [(VName, Exp)])
