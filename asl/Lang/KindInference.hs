@@ -1,3 +1,4 @@
+{-# LANGUAGE FlexibleContexts  #-}
 module Lang.KindInference where
 import Lang.Syntax
 import Lang.PrettyPrint

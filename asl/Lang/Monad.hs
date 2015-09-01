@@ -1,4 +1,4 @@
-{-# LANGUAGE NamedFieldPuns, DeriveDataTypeable, ParallelListComp, GeneralizedNewtypeDeriving, FlexibleInstances  #-}
+{-# LANGUAGE NamedFieldPuns, DeriveDataTypeable, ParallelListComp, GeneralizedNewtypeDeriving, FlexibleInstances, FlexibleContexts  #-}
 module Lang.Monad where
 import Lang.Syntax
 import Lang.PrettyPrint
