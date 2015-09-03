@@ -152,8 +152,16 @@ firstNon (a:as) = if a == [("Fail", "Fail")] then firstNon as else Just a
 -- all the variables in tss.
 -- FIXME: It looks like when the length of two inputs are not equal, we can still
 -- have some matchable result...
+-- Decided to not handle permutation at all. 
 firstSub :: [[Exp]] -> [[Exp]] -> Maybe [(VName, VName)]
-firstSub  fss tss = firstNon $ formulasEq fss tss 
+firstSub  fss tss = firstNon $ alphaFormulas fss tss 
+
+-- formulasEq2 :: [[Exp]] -> [[Exp]] -> [[(VName, VName)]]
+-- formulasEq2 fss tss =
+--    map helper all
+--   where helper y = case alphaFormulas y fss of
+--                        Nothing -> [("Fail", "Fail")]
+--                        Just o -> o
 
 
 -- testing

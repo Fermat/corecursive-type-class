@@ -37,7 +37,7 @@ instance Eq Nat => Eq Nat where
                           Z -> False
         		  S n -> eq m n
 
-instance Eq (List a), Eq a => Eq (List a) where
+instance Eq a, Eq (List a) => Eq (List a) where
    eq = \ l1 l2 . case l1 of
                     Nil -> case l2 of
                              Nil -> True

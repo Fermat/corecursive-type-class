@@ -326,7 +326,7 @@ checkInst (Inst (qs, u) defs) = do
     case sub of
       Nothing -> 
         tcError "Required predicates does not match specified predicates: "
-        [(disp "Required:", hsep $ map disp $ concat genForms'),(disp "Specified: ", hsep $ map disp $ concat forms)]
+        [(disp "Required:", hsep (punctuate comma $ map disp $ concat genForms')),(disp "Specified: ", hsep ( punctuate comma $ map disp $ concat forms))]
       Just my -> do
 --        emit $ show my
 --       emit $ (hsep $ map disp genAssumps)
