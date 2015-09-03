@@ -60,12 +60,13 @@ rewrite (Lambda x t) = do
 rewrite a = rewrite (Imply [] a)
 
 runStep d axioms =
-  runState (evalStateT (oneStep d) 0) axioms
+  runState (evalStateT (oneStep d) 0) ([], axioms)
 
-
-oneStep :: Exp -> StateT Int (State Axioms) (Maybe Exp)
+-- (assump, axioms)
+oneStep :: Exp -> StateT Int (State (Axioms, Axioms)) (Maybe Exp)
 oneStep (Imply [] h) = do
-  axioms <- lift get
+  (assump, axiom) <- lift get
+  let axioms = assump ++ axiom
   case firstMatch h axioms of
     Nothing -> return Nothing
     Just (k, ls) -> return $ Just $ foldl' (\ z x -> App z x) (EVar k) ls
@@ -82,7 +83,7 @@ oneStep (Imply [] h) = do
 oneStep (Imply bds@(y:ys) h) = do
   as <- mapM (\ x -> makeName "b") bds
   let new = zip as bds
-  lift $ modify (\ y -> new ++ y)
+  lift $ modify (\ (x, y) -> (new ++ x, y))
   res <- oneStep h
   case res of
     Nothing -> return Nothing
@@ -141,11 +142,11 @@ runPositive exp name =
 
 corecursive :: Exp -> Axioms -> Lemmas -> Maybe Exp
 corecursive t axioms lemmas = 
-  let (t', as) = runStep t axioms in
+  let (t', (asump, ax)) = runStep t axioms in
   case t' of
     Nothing -> Nothing
     Just t'' -> 
-      runRewrite t'' (lemmas++as)
+      runRewrite t'' (asump++lemmas++ax)
 
 t1' = FApp (EVar "Eq") (FApp (EVar "y") (EVar "y"))
 t2' = FApp (EVar "Eq") (FApp (EVar "char") (EVar "char"))
