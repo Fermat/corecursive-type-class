@@ -1,3 +1,4 @@
+{-# LANGUAGE FlexibleContexts  #-}
 module Lang.Functionalisation where
 import Lang.Syntax
 import Lang.PrettyPrint
