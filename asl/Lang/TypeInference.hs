@@ -284,6 +284,36 @@ makeVarNs s n | n >= 0 = map (\ y -> s ++ show y) [1..n]
 
 checkInst :: Inst -> TCMonad ()
 checkInst (Inst (qs, u) defs) = do
+     let
+       u' = getPred u
+       terms = map snd defs
+       d = foldl' (\ s arg -> App s arg) (EVar $ "C"++ u') terms
+       ft = makeType qs u
+     res <- checkProg d 
+     let d' = tFst res
+         ty = tSnd res
+         assumps = tTrd res
+     substs <- lift get
+     let ty' = applyE substs ty
+         assumps' = map (\ (x,p) -> (x, applyE substs p)) assumps
+         preds = map snd assumps'
+         sub = listAlpha (qs ++ [u]) (preds++[ty'])
+     case sub of
+       Nothing -> 
+         tcError "Required predicates does not match specified predicates: "
+         [(disp "Required:",
+           (hsep (punctuate comma $ map disp $ preds)) <+> text "=>" <+> disp ty'),
+          (disp "Specified: ",
+           (hsep ( punctuate comma $ map disp $ qs)) <+> text "=>" <+> disp u)]
+       Just my -> do
+         let 
+           constr = foldr (\ a b -> Lambda a b) d' $ map fst assumps'
+         name <- makeName "e"
+         ft' <- toTScheme ft
+         lift $ lift $ modify (\ e -> extendProgDef name ft' constr e) -- extend instance func
+         lift $ lift $ modify (\ e -> extendAxiom name (Imply qs u) e) -- extend axioms
+
+{-
   let ft = makeType qs u
       ft1 = Imply qs u
       u' = getPred u
@@ -294,25 +324,19 @@ checkInst (Inst (qs, u) defs) = do
   res <- mapM (\ (x, t) -> checkProg t) defs    -- type check
   let progs = progDef gEnv
       tyss = map tSnd res
- --  emit $ (hcat $ map disp tyss) <+> disp u
   ensureInst tyss u progs -- ensure declared type match with the infered types
   uniRes <- lift get
   ft' <- toTScheme ft
   let  types = map (applyE uniRes) tyss
---       datas = map fst $ dataType gEnv
---  emit $ (hsep $ map disp types)
   defTypes <- mapM (\n -> checkMethod n progs) methNames -- check all implemented methods are defined
   ensureT types defTypes
   let impArgs = zip args qs
---      lEnv = impArgs  ++ [("dict", u) ]
       forms = divide $ map snd impArgs
---      lEnv' = reconstruct impArgs $ concat forms
       genAssumps = map (\ (x,y) -> (x, applyE uniRes y)) $ concat $ map tTrd res
       terms = map tFst res
       genForms = divide $ map snd genAssumps
       precondition = check genForms forms && check forms genForms
       lengCondition = length (concat genForms) == length (concat forms)
-      -- (Let [("dict", d)] $ PVar "dict" )
   if precondition && lengCondition then do
     let genForms' = reorder genForms forms
         sub = firstSub genForms' forms
@@ -321,26 +345,14 @@ checkInst (Inst (qs, u) defs) = do
         newTerms = map (applyE phi) terms
         d = foldl' (\ s arg -> App s arg) (EVar $ "C"++ u') newTerms
         constr = foldr (\ a b -> Lambda a b) d $ map fst impArgs 
-    -- emit $ show genForms'
-    -- emit $ show forms
     case sub of
       Nothing -> 
         tcError "Required predicates does not match specified predicates: "
         [(disp "Required:", hsep (punctuate comma $ map disp $ concat genForms')),(disp "Specified: ", hsep ( punctuate comma $ map disp $ concat forms))]
       Just my -> do
---        emit $ show my
---       emit $ (hsep $ map disp genAssumps)
         name <- makeName "e"
         lift $ lift $ modify (\ e -> extendProgDef name ft' constr e) -- extend instance func
         lift $ lift $ modify (\ e -> extendAxiom name ft1 e) -- extend axioms
-        -- let def  = makeDef qs (EVar name)
-        --     Just (kindInfo, False) = lookup u' $ dataType gEnv
-        --     kinds = flatten kindInfo            
-        --     args1 = getArgs u
---            info = zip args1 kinds 
---            pats = map (\ x -> toPat x gEnv) $ args1
-        --lift $ lift $ modify (\ e -> extendEq u' (pats, def) e)  -- extend functional type class    
-  --      return ()
     else tcError "Required predicates does not match specified predicates: "
         [(disp "Required:", hsep $ map disp $ concat genForms),(disp "Specified: ", hsep $ map disp $ concat forms)]
   where reconstruct env (f:fs) = let a = keyOf f env in (a,f) : reconstruct (delete (a,f) env) fs
@@ -364,6 +376,7 @@ checkInst (Inst (qs, u) defs) = do
               t' <- freshInst t
               unification (getFType t') resTypes
 
+-}
 {-
 toPat p state = 
   let ps = toSpine p
