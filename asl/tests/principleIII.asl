@@ -17,7 +17,7 @@ data Pair a b where
 
 data HBush f a where
   HBLeaf :: HBush f a
-  HBNode :: Pair a (f (f a)) -> HBush f a
+  HBNode ::  a -> (f (f a)) -> HBush f a
 
 data HPTree f a where
   HPLeaf :: a -> HPTree f a

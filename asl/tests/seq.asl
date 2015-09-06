@@ -4,14 +4,19 @@ module seq where
 -- axiom D (S m) Z => D Z m
 
 
-axiom Pair b m => Add Z m b
-axiom Add n (S m) b => Add (S n) m b
-axiom (Nat a, Add a b b) => Pair a b
-axiom Nat Z
-axiom Nat n => Nat (S n)
+-- axiom Pair b m => Add Z m b
+-- axiom Add n (S m) b => Add (S n) m b
+-- axiom (Nat a, Add a b b) => Pair a b
+-- axiom Nat Z
+-- axiom Nat n => Nat (S n)
 
-lemma Pair Z (S Z)
--- lemma  D Z m => D (S m) Z
+-- lemma Pair Z (S Z)
+
+
+
+
+
+-- axiom  D Z m => D (S m) Z
 -- axiom (forall y . D y m => D m (S y)) => D Z m
 
 -- axiom (forall y . D y n => D (S n) y ) => D (S n) Z
