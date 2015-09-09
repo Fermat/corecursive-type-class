@@ -47,14 +47,14 @@ instance Eq a, Eq b => Eq (Pair a b) where
                  Pair x1 y1 -> case y of
                                 Pair x2 y2 -> and (eq x1 x2) (eq y1 y2)
 
-instance Eq (Pair a (f (f a))) => Eq (HBush f a) where
+instance Eq a, Eq (f (f a)) => Eq (HBush f a) where
   eq = \ x y . case x of
                  HBLeaf -> case y of
                             HBLeaf -> True
-                            HBNode a -> False
-                 HBNode a -> case y of
+                            HBNode a c -> False
+                 HBNode a c1 -> case y of
                               HBLeaf -> False
-                              HBNode b -> eq a b
+                              HBNode b c2  -> and (eq a b) (eq c1 c2)
 
 instance Eq a, Eq (f (Pair a a)) => Eq (HPTree f a) where
    eq = \ x y . case x of
@@ -103,7 +103,7 @@ instance Eq a, Eq (f a), Eq (f a), Eq (f (Maybe a)) => Eq (HLam f a) where
 
 term1 = In HBLeaf
 
-term2 = In (HBNode (Pair Unit term1))
+term2 = In (HBNode Unit term1)
 
 test = eq term2 term1
 test1 = eq term2 term2
