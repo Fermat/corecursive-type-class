@@ -57,9 +57,11 @@ instance Eq (f (Fix (Comp g f) g)) => Eq (Fix f g) where
  		      	    Fix t -> eq s t
 
 --lemma Eq (Fix f Pair)
-lemma (forall x . Eq x => Eq (f x)) => Eq (Fix f Pair)
-lemma (forall x . Eq x => Eq (f x), forall x . Eq x => Eq (g x)) =>
-             Eq (Fix f g)
+-- lemma (forall x . Eq x => Eq (f x)) => Eq (Fix f Pair)
+-- lemma (forall x . Eq x => Eq (f x), forall x . Eq x => Eq (g x)) =>
+--              Eq (Fix f g)
+
+lemma (forall x . Eq x => Eq (g x)) => Eq (Fix (GSeqF Unit) g)
 
 test = eq (Fix (Cons Unit (Fix (Comp (Pair Nil Nil))))) (Fix Nil)
 test1 = eq (Fix (Cons Unit (Fix (Comp (Pair Nil Nil))))) (Fix (Cons Unit (Fix (Comp (Pair Nil Nil)))))

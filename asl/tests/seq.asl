@@ -1,8 +1,9 @@
 module seq where
 
--- axiom D n (S m) => D (S n) m
--- axiom D (S m) Z => D Z m
+axiom D n (S m) => D (S n) m
+axiom D (S m) Z => D Z m
 
+lemma (forall n . D n (S m) => D m (S Z)) => D Z m
 
 -- axiom Pair b m => Add Z m b
 -- axiom Add n (S m) b => Add (S n) m b
