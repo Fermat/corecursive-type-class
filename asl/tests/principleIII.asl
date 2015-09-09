@@ -17,7 +17,7 @@ data Pair a b where
 
 data HBush f a where
   HBLeaf :: HBush f a
-  HBNode ::  a -> (f (f a)) -> HBush f a
+  HBNode ::  Pair a (f (f a)) -> HBush f a
 
 data HPTree f a where
   HPLeaf :: a -> HPTree f a
@@ -101,6 +101,7 @@ instance Eq a, Eq (f a), Eq (f a), Eq (f (Maybe a)) => Eq (HLam f a) where
 -- lemma Eq x => Eq (Mu HPTree x)
 -- lemma Eq x => Eq (Mu HLam x)
 
+lemma (Eq x , forall f a . (Eq a, Eq (f (Pair a a))) => Eq (q f a)) => Eq (Mu q x)
 term1 = In HBLeaf
 
 term2 = In (HBNode Unit term1)
