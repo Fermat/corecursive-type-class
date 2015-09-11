@@ -3,8 +3,14 @@ module seq where
 axiom D n (S m) => D (S n) m
 axiom D (S m) Z => D Z m
 
-lemma (forall n . D n (S m) => D m (S Z)) => D Z m
+-- lemma (forall n . D n (S m) => D m (S n)) => D Z m
+-- lemma (forall n . D n (S m) => D (S n) m) => D Z m
+-- lemma D (S n) m => D m (S n)
 
+lemma D (S n) Z => D Z (S n)
+
+
+-- lemma D Z Z
 -- axiom Pair b m => Add Z m b
 -- axiom Add n (S m) b => Add (S n) m b
 -- axiom (Nat a, Add a b b) => Pair a b

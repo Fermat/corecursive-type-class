@@ -1,4 +1,4 @@
-{-# LANGUAGE RankNTypes, TypeFamilies, UndecidableInstances #-}
+{-# LANGUAGE RankNTypes, TypeFamilies, UndecidableInstances, AllowAmbiguousTypes #-}
 
 data Z
 data S n
@@ -14,9 +14,12 @@ k2 = undefined
 f :: (forall n. D n (S m) -> D (S (Add m n)) Z) -> D Z m
 f g = k2 (g (f (\ x -> g (k1 x))))
 
-p :: D Z Z
-p =  f (\ x -> k1 x)
-type family Add m n
-type instance Add n Z  =  n
-type instance Add m (S n) = Add (S m) n
+p :: (n ~ Add Z n) => D Z Z
+p =  f k1
 
+type family Add m n where
+  -- Add Z n  =  n
+  -- Add (S m) n = Add m (S n)
+  Add n Z  =  n
+  Add m (S n) = Add (S m) n
+ 
