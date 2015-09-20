@@ -1,73 +1,97 @@
-# functionalised-type-class
-A functionalised implementation of type class
+# corecursive-type-class
+A implementation of type class mechanism based on corecursive resolution
 
 To install: cabal install
 
-To run the interpreter and type checker for a file: asl filename
+To run the interpreter and type checker for a file: asl `filename`
 
-A simple language(called ASL) that support recursive definition and case expression,
-algebraic data type, class declaration(without subtyping and superclass),
-instance declaration. 
+A simple language(called ASL) that support recursive definition and simple case expression,
+algebraic data type, simple class declaration and instance declaration. 
 
-The implementation includes polymorphic type inference, type class resolution and
-a naive version of interpreter.
+The current implementation includes polymorphic type inference, type class resolution and
+a naive version of interpreter(through the *reduce* keyword).
 
 ASL support guided corecursive evidence construction through the ''lemma'' mechanism, 
 and sometimes this mechanism can be fully automized.
 
+Some remarks: lambda abstraction is slash-dot instead of slash-arrow, e.g.
+`(\ x . x x) (\ x . x x)`. Data declaration is only available using GADTs(which we does not support yet) convention. Currently no type annotation is allowed for function. To achieve direct experimentation on resolution, we recommend using the keyword *axiom* to introduce an axiom and *lemma* to use the existing axioms to prove the lemma, once it is proven, it will be stored and can be used later. Examples are in the `tests` directory.
+
+The following is a direct experiment on resolution.
 ```haskell
-module dlist where
+module experiment where
 
-data DList a where
-  Ni :: DList a
-  Con :: a -> (DList (DList a)) -> DList a
+axiom (Eq x, Eq (D (D x))) => Eq (D x)
 
+axiom Eq Char
+
+lemma Eq x => Eq (D x)
+
+lemma Eq (D Char)
+```
+
+
+The following is an more concrete example.
+```haskell
+module principle where
+
+data Unit where
+  Unit :: Unit
+
+data Pair a b where
+ Pair :: a -> b -> Pair a b
+
+data HBush f a where
+  HBLeaf :: HBush f a
+  HBNode :: Pair a (f (f a)) -> HBush f a
+
+data HPTree f a where
+  HPLeaf :: a -> HPTree f a
+  HPNode :: f (Pair a a) -> HPTree f a  
+
+data Mu f a where
+  In :: f (Mu f) a -> Mu f a
+  
 data Bool where
      True :: Bool
      False :: Bool
 
-and = \ x y . case x of
-                True -> y
-                False -> False
-
-data Nat where
-  Z :: Nat
-  S :: Nat -> Nat
-
 class Eq a where
    eq :: Eq a => a -> a -> Bool
 
-instance Eq Nat => Eq Nat where
-  eq = \ x y . case x of
-                 Z -> case y of
-                         Z -> True
-                         S n -> False
-                 S m -> case y of
-                          Z -> False
-                          S n -> eq m n
-                  
-instance Eq a, Eq (DList (DList a)) => Eq (DList a) where
+and = \ x y . case x of
+                True -> y
+		False -> False
+
+instance  => Eq Unit where
    eq = \ x y . case x of
-                  Con a as -> case y of
-                                Con b bs -> and (eq a b) (eq as bs)
-                                Ni -> False
-                  Ni -> case y of
-                          Con c cs -> False
-                          Ni -> True
+                   Unit -> case y of 
+                              Unit -> True
 
--- Now for simple cases like this we don't even need to manually 
--- input lemma, because it can be automatically generated. The manual
--- option is still available to handle more complicated situation.
+instance Eq a, Eq b => Eq (Pair a b) where
+  eq = \ x y . case x of
+                 Pair x1 y1 -> case y of
+                                 Pair x2 y2 -> and (eq x1 x2) (eq y1 y2)
 
--- lemma Eq Nat
+instance Eq (Pair a (f (f a))) => Eq (HBush f a) where
+  eq = \ x y . case x of
+                 HBLeaf -> case y of
+                            HBLeaf -> True
+                            HBNode a -> False
+                 HBNode a -> case y of
+                              HBLeaf -> False
+                              HBNode b -> eq a b
 
--- lemma forall a . Eq a => Eq (DList a)
+instance Eq (f (Mu f) a) => Eq (Mu f a) where
+   eq = \ x y . case x of
+                  In s -> case y of
+ 		            In t -> eq s t
 
-test = eq (Con Z (Con (Con Z (Con (Con Z Ni) Ni)) Ni))  (Con Z (Con (Con Z Ni) Ni))
-test1 = eq (Con Z (Con (Con Z (Con (Con Z Ni) Ni)) Ni)) (Con Z (Con (Con Z (Con (Con Z Ni) Ni)) Ni))  
-
-reduce test
+term1 = In HBLeaf
+term2 = In (HBNode (Pair Unit term1))
+test1 = eq term2 term2
 reduce test1
+
 ```
 
-The reduction for test above will return False and test1 return True. 
+
