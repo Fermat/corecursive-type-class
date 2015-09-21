@@ -15,7 +15,7 @@ ASL support guided corecursive evidence construction through the ''lemma'' mecha
 and sometimes this mechanism can be fully automized.
 
 Some remarks: lambda abstraction is slash-dot instead of slash-arrow, e.g.
-`(\ x . x x) (\ x . x x)`. Data declaration is only available using GADTs(which we does not support yet) convention. Currently no type annotation is allowed for function. To achieve direct experimentation on resolution, we recommend using the keyword *axiom* to introduce an axiom and *lemma* to use the existing axioms to prove the lemma, once it is proven, it will be stored and can be used later. Examples are in the `tests` directory.
+`(\ x . x x) (\ x . x x)`. Data declaration is only available using GADTs(which we does not support yet) convention. Currently no type annotation is allowed for function. To achieve direct experimentation on resolution, we recommend using the keyword *axiom* to introduce an axiom and *lemma* to use the existing axioms to prove the lemma, once it is proven, it will be stored and can be used later. Examples are in the `examples` directory.
 
 The following is a direct experiment on resolution.
 ```haskell
