@@ -20,9 +20,9 @@ Some remarks: lambda abstraction is slash-dot instead of slash-arrow, e.g.
 The following is a direct experiment on corecursive resolution.
 ```haskell
 module fun where
-axiom Philosopher x => Immortal x
-axiom Philosopher x => Philosopher x
-auto Immortal Socrates
+axiom Think x => Exist x
+axiom Think x => Think x
+auto Exist I
 ```
 
 

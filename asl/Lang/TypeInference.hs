@@ -113,9 +113,15 @@ checkDecl (AutoDecl pos c) = do
   case res of
     Nothing -> tcError "typing error: "
                [(disp "unprovable lemma ", disp c)]
-    Just r -> do
-      lift $ lift $ modify (\ e -> extendLemma n lm e)
-      lift $ lift $ modify (\ e -> extendProgDef n (Scheme [] (DArrow [] lm)) r e)
+    Just r -> 
+      case lm of
+        Imply _ _ -> do
+          lift $ lift $ modify (\ e -> extendLemma n lm e)
+          lift $ lift $ modify (\ e -> extendProgDef n (Scheme [] (DArrow [] lm)) r e)
+        other -> do
+          lift $ lift $ modify (\ e -> extendLemma n (Imply [] other) e)
+          lift $ lift $ modify (\ e -> extendProgDef n (Scheme [] (DArrow [] lm)) r e)
+
  where getHead (Imply _ p) = p
        getHead p = p
 
@@ -577,8 +583,12 @@ proving n c = do
   case res of
     Nothing -> tcError "typing error: "
                [(disp "generated intermediate lemma is unprovable ", disp c)]
-    Just r -> do
-      lift $ lift $ modify (\ e -> extendLemma n lm e)
-      lift $ lift $ modify (\ e -> extendProgDef n (Scheme [] (DArrow [] lm)) r e)
-
+    Just r -> 
+      case lm of
+        Imply _ _ -> do
+          lift $ lift $ modify (\ e -> extendLemma n lm e)
+          lift $ lift $ modify (\ e -> extendProgDef n (Scheme [] (DArrow [] lm)) r e)
+        other -> do
+          lift $ lift $ modify (\ e -> extendLemma n (Imply [] other) e)
+          lift $ lift $ modify (\ e -> extendProgDef n (Scheme [] (DArrow [] lm)) r e)
 
