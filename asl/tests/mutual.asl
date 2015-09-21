@@ -30,9 +30,11 @@ class Eq a where
 and = \ x y . case x of
                 True -> y
 		False -> False
-
 instance  => Eq Unit where
-   eq = \ x y . True
+   eq = \ x y . case x of
+                   Unit -> case y of 
+                              Unit -> True
+
 
 instance Eq a, Eq b => Eq (Pair a b) where
   eq = \ x y . case x of
@@ -60,10 +62,10 @@ instance Eq a, Eq (Pair (f1 a) (f2 a)) => Eq (H1 f1 f2 a) where
  		                 H1 s1 p1 -> and (eq s1 s) (eq p p1)
 
 
--- lemma (Eq x, Eq (Mu H2 H1 x)) => Eq (Mu H1 H2 x)
--- lemma Eq x => Eq (Mu H2 H1 x)
+lemma (Eq x, Eq (Mu H2 H1 x)) => Eq (Mu H1 H2 x)
+lemma Eq x => Eq (Mu H2 H1 x)
 -- lemma Eq (Mu H1 H2 Unit)
 
-lemma (Eq x, Eq (Mu h2 H1 x)) => Eq (Mu h1 H2 x)
-lemma Eq x => Eq (Mu H2 H1 x)
+-- lemma (Eq x, Eq (Mu h2 H1 x)) => Eq (Mu h1 H2 x)
+-- lemma Eq x => Eq (Mu H2 H1 x)
 

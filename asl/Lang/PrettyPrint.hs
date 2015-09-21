@@ -70,9 +70,11 @@ instance Disp Exp where
     <+> text "."
     <+> disp f
 
+  disp (a@(Imply [] h)) = disp h
+
   disp (a@(Imply xs h)) =
-    text "(" <+> (hsep $ punctuate comma (map disp xs))
-    <+> text ") =>"
+    text "(" <> (hsep $ punctuate comma (map disp xs))
+    <> text ") =>"
     <+> disp h
 
   precedence (FApp _ _) = 10
