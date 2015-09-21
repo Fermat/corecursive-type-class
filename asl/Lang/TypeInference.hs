@@ -44,9 +44,10 @@ checkDecl (EvalDecl p) = do
       axs = axioms env
       lems = lemmas env
       preds = map snd assump'
---  emit $ vcat (map disp preds)
---  emit "enter"
       autoLems = concat $ map (\ x -> fixLemma x (lems ++ axs) []) preds
+  -- emit $ vcat (map disp preds)
+  -- emit $ lems ++ axs
+  -- emit autoLems
   autos <- mapM (\ x -> makeName "auto") autoLems
   zipWithM proving autos autoLems
   let
@@ -63,19 +64,6 @@ checkDecl (EvalDecl p) = do
           tcError "unable to construct evidence "
                [(disp "constraints ", disp assump')]
 --        proving a b c | trace ("myfun " ++ show b ++ " " ++ show c) False = undefined
-        proving n c = do
-          env <- lift $ lift get
-          let
-              ax = lemmas env ++ axioms env
-              lm = runPositive c ("C"++n++"D")
-              (Imply [c'] _) = runPositive (Imply [c] (Con "Q")) ("Q"++n++"D")
-              res = corecursive c' ax [(n, lm)]
-          case res of
-            Nothing -> tcError "typing error: "
-                       [(disp "generated intermediate lemma is unprovable ", disp c)]
-            Just r -> do
-              lift $ lift $ modify (\ e -> extendLemma n lm e)
-              lift $ lift $ modify (\ e -> extendProgDef n (Scheme [] (DArrow [] lm)) r e)
 
 
 checkDecl (ProgDecl pos x p) = do
@@ -103,6 +91,34 @@ checkDecl (InstDecl pos inst) =
 checkDecl (ClassDecl pos c) =   
   checkClass c -- `catchError` addProgErrorPos pos c
 
+checkDecl (AutoDecl pos c) = do
+  n <- makeName "goalLem"
+  env <- lift $ lift get
+  let ax = lemmas env ++ axioms env
+      lm = runPositive c ("C"++n++"D")
+      (Imply [c1] _) = runPositive (Imply [c] (Con "Q")) ("Q"++n++"D")
+      c' = getHead c1
+      genLem = fixLemma c' ax []
+  autos <- mapM (\ x -> makeName "genLemm") genLem
+  zipWithM proving autos genLem
+  env' <- lift $ lift get
+  
+  -- emit ax
+  -- emit $ disp c'
+  -- emit $ genLem
+  let
+    ax' = lemmas env' ++ axioms env'
+    autos' = zip autos genLem
+    res = runRewrite c' ax'
+  case res of
+    Nothing -> tcError "typing error: "
+               [(disp "unprovable lemma ", disp c)]
+    Just r -> do
+      lift $ lift $ modify (\ e -> extendLemma n lm e)
+      lift $ lift $ modify (\ e -> extendProgDef n (Scheme [] (DArrow [] lm)) r e)
+ where getHead (Imply _ p) = p
+       getHead p = p
+
 checkDecl (LemmaDecl pos c) = do
   n <- makeName "lem"
   env <- lift $ lift get
@@ -119,10 +135,15 @@ checkDecl (LemmaDecl pos c) = do
 
 checkDecl (AxiomDecl pos c) = do
   n <- makeName "Ax"
-  let axiom = runPositive c ("A"++n++"D") 
-  lift $ lift $ modify (\ e -> extendProgDef n (Scheme [] (DArrow [] axiom)) (Con n) e)
-  lift $ lift $ modify (\ e -> extendAxiom n axiom e) -- extend axioms
-  
+  let axiom = runPositive c ("A"++n++"D")
+  case axiom of
+    Imply _ _ ->  do
+      lift $ lift $ modify (\ e -> extendProgDef n (Scheme [] (DArrow [] axiom)) (Con n) e)
+      lift $ lift $ modify (\ e -> extendAxiom n axiom e) -- extend axioms
+    a -> do
+      lift $ lift $ modify (\ e -> extendProgDef n (Scheme [] (DArrow [] axiom)) (Con n) e)
+      lift $ lift $ modify (\ e -> extendAxiom n (Imply [] a) e) -- extend axioms
+
 -- (term, type, predicates assumptions)
 checkProg ::  Exp -> TCMonad (Exp, Exp, [(VName, Exp)])
 checkProg (Con y) = do
@@ -540,5 +561,18 @@ freshInst (Scheme xs t) =
      return $ applyQ substs t
 
 
+proving n c = do
+  env <- lift $ lift get
+  let
+    ax = lemmas env ++ axioms env
+    lm = runPositive c ("C"++n++"D")
+    (Imply [c'] _) = runPositive (Imply [c] (Con "Q")) ("Q"++n++"D")
+    res = corecursive c' ax [(n, lm)]
+  case res of
+    Nothing -> tcError "typing error: "
+               [(disp "generated intermediate lemma is unprovable ", disp c)]
+    Just r -> do
+      lift $ lift $ modify (\ e -> extendLemma n lm e)
+      lift $ lift $ modify (\ e -> extendProgDef n (Scheme [] (DArrow [] lm)) r e)
 
 

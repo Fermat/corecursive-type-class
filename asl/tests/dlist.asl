@@ -28,14 +28,15 @@ myeq = \ x y . case x of
                           Z -> False
      			  S n -> myeq m n
    
-instance Eq Nat => Eq Nat where
-  eq = \ x y . case x of
-                 Z -> case y of
-		         Z -> True
-			 S n -> False
-	         S m -> case y of
-                          Z -> False
-			  S n -> eq m n
+instance  => Eq Nat where
+ eq = myeq
+  -- eq = \ x y . case x of
+  --                Z -> case y of
+  -- 		         Z -> True
+  -- 			 S n -> False
+  -- 	         S m -> case y of
+  --                         Z -> False
+  -- 			  S n -> eq m n
    
                 
 instance Eq a, Eq (DList (DList a)) => Eq (DList a) where
@@ -49,6 +50,6 @@ instance Eq a, Eq (DList (DList a)) => Eq (DList a) where
 
 test = eq (Con Z (Con (Con Z (Con (Con Z Ni) Ni)) Ni))  (Con Z (Con (Con Z Ni) Ni))
 reduce test
-reduce eq (Con Z (Con (Con Z (Con (Con Z Ni) Ni)) Ni)) (Con Z (Con (Con Z (Con (Con Z Ni) Ni)) Ni))
+-- reduce eq (Con Z (Con (Con Z (Con (Con Z Ni) Ni)) Ni)) (Con Z (Con (Con Z (Con (Con Z Ni) Ni)) Ni))
 
 -- (con z (con (con z (con (con z ni) ni)) ni))

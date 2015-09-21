@@ -82,7 +82,7 @@ gModule = do
 
 gDecl :: Parser Decl
 gDecl =  try gDataDecl <|>  try instDecl
-        <|> try classDecl <|> try progDecl <|> try reduceDecl <|> lemmaDecl <|> axiomDecl
+        <|> try classDecl <|> try progDecl <|> try reduceDecl <|> lemmaDecl <|> axiomDecl <|> autoDecl
 
 
 var :: Parser Exp
@@ -286,7 +286,7 @@ singleG =
     single = do
       vs <- option [] prefix
       x <- pred
-      return $ foldr (\ z x -> Forall z x) (Imply [] x) vs
+      return $ foldr (\ z x -> Forall z x) (x) vs
       
     manyG = do
       vs <- option [] prefix
@@ -314,6 +314,13 @@ axiomDecl = do
   a <- singleG
   pos <- getPosition  
   return $ AxiomDecl pos a
+
+autoDecl :: Parser Decl
+autoDecl = do
+  reserved "auto"
+  a <- singleG
+  pos <- getPosition  
+  return $ AutoDecl pos a
 
 -----------------------Positions -------
   
@@ -345,7 +352,7 @@ gottlobStyle = Token.LanguageDef
                     "by", "from", "in", "let", "simpCmp", "invSimp",
                     "case", "of",
                     "data", "if", "then", "else",
-                    "axiom", "proof", "qed", "lemma",
+                    "axiom", "proof", "qed", "lemma", "auto",
                     "show",
                     "where", "module",
                     "infix", "infixl", "infixr", "pre", "post",

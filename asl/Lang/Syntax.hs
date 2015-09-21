@@ -50,6 +50,7 @@ data Decl = ProgDecl SourcePos VName Exp
           | OperatorDecl String Int String
           | LemmaDecl SourcePos Exp
           | AxiomDecl SourcePos Exp
+          | AutoDecl SourcePos Exp
           deriving Show
 
 data Pattern = Var VName
@@ -207,4 +208,5 @@ flatten (Pos _ f) = flatten f
 flatten (Arrow f1 f2) = f1 : flatten f2
 flatten (KArrow f1 f2) = f1 : flatten f2
 flatten _ = []
+
 
