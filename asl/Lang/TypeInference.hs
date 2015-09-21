@@ -129,9 +129,15 @@ checkDecl (LemmaDecl pos c) = do
   case res of
     Nothing -> tcError "typing error: "
                [(disp "unprovable lemma ", disp c)]
-    Just r -> do
-      lift $ lift $ modify (\ e -> extendLemma n lm e)
-      lift $ lift $ modify (\ e -> extendProgDef n (Scheme [] (DArrow [] lm)) r e)
+    Just r -> 
+      case lm of
+           Imply _ _ -> do
+             lift $ lift $ modify (\ e -> extendLemma n lm e)
+             lift $ lift $ modify (\ e -> extendProgDef n (Scheme [] (DArrow [] lm)) r e)
+           a -> do
+             lift $ lift $ modify (\ e -> extendLemma n (Imply [] a) e)
+             lift $ lift $ modify (\ e -> extendProgDef n (Scheme [] (DArrow [] lm)) r e)        
+
 
 checkDecl (AxiomDecl pos c) = do
   n <- makeName "Ax"

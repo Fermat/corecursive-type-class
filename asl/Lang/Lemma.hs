@@ -230,3 +230,15 @@ helper xs = (and (map fst xs), map snd xs)-}
 -- test99 = constructLemma (FApp (Con "Eq") (FApp (Con "DList") (Con "Nat"))) [("e35",Imply [FApp (Con "Eq") (EVar "a"),FApp (Con "Eq") (FApp (Con "DList") (FApp (Con "DList") (EVar "a")))] (FApp (Con "Eq") (FApp (Con "DList") (EVar "a")))),("e14",Imply [] (FApp (Con "Eq") (Con "Nat")))]
 
 -- test10 = constructLemma (FApp (Con "Eq") (FApp (Con "DList") (Con "Nat"))) [("Ax0",Imply [FApp (Con "Eq") (EVar "a"),FApp (Con "Eq") (FApp (Con "DList") (FApp (Con "DList") (EVar "a")))] (FApp (Con "Eq") (FApp (Con "DList") (EVar "a")))), ("Ax1", Imply [] (FApp (Con "Eq") (Con "Nat")))]
+
+test11 = constructLemma (FApp (Con "Sovable") (Con "Q"))
+         [("lem2",Imply [] (FApp (Con "Mortal") (Con "Socrates"))),
+          ("Ax4",Imply [FApp (Con "Exist") (Con "Infinity")]
+                 (FApp (Con "Exist") (Con "Infinity"))),
+          ("Ax3",Imply [FApp (Con "Exist") (Con "Infinity")]
+                 (FApp (Con "Sovable") (EVar "x"))),
+          ("Ax1",Imply [] (FApp (Con "Human") (Con "Socrates"))),
+          ("Ax0",Imply [FApp (Con "Human") (EVar "x")]
+                 (FApp (Con "Mortal") (EVar "x")))]
+
+

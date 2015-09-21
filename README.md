@@ -17,21 +17,16 @@ and sometimes this mechanism can be fully automized.
 Some remarks: lambda abstraction is slash-dot instead of slash-arrow, e.g.
 `(\ x . x x) (\ x . x x)`. Data declaration is only available using GADTs(which we does not support yet) convention. Currently no type annotation is allowed for function. To achieve direct experimentation on resolution, we recommend using the keyword *axiom* to introduce an axiom and *lemma* to use the existing axioms to prove the lemma, once it is proven, it will be stored and can be used later. Examples are in the `examples` directory.
 
-The following is a direct experiment on resolution.
+The following is a direct experiment on corecursive resolution.
 ```haskell
-module experiment where
-
-axiom (Eq x, Eq (D (D x))) => Eq (D x)
-
-axiom Eq Char
-
-lemma Eq x => Eq (D x)
-
-lemma Eq (D Char)
+module fun where
+axiom Philosopher x => Immortal x
+axiom Philosopher x => Philosopher x
+auto Immortal Socrates
 ```
 
 
-The following is an more concrete example.
+The following is less fun example.
 ```haskell
 module principle where
 
