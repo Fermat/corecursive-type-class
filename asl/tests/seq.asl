@@ -3,11 +3,15 @@ module seq where
 axiom D n (S m) => D (S n) m
 axiom D (S m) Z => D Z m
 
+-- axiom Add n (S m) (S a) => Add (S n) m a
+-- axiom Add Z m m
+-- axiom (Add m n (S a), (D n (S m) => D a Z))  => B m a
+-- lemma B Z m => D Z m
 -- lemma (forall n . D n (S m) => D m (S n)) => D Z m
 -- lemma (forall n . D n (S m) => D (S n) m) => D Z m
 -- lemma D (S n) m => D m (S n)
 
-lemma D (S n) Z => D Z (S n)
+-- lemma D (S n) Z => D Z (S n)
 
 
 -- lemma D Z Z
